@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* .ag-theme-quartz {
+    --ag-foreground-color: rgb(126, 46, 132);
+    --ag-background-color: rgb(249, 245, 227);
+    --ag-header-foreground-color: rgb(204, 245, 172);
+    --ag-header-background-color: rgb(209, 64, 129);
+    --ag-odd-row-background-color: rgb(0, 0, 0, 0.03);
+    --ag-header-column-resize-handle-color: rgb(126, 46, 132);
+
+    --ag-font-size: 17px;
+    --ag-font-family: monospace;
+} */
+ /* Global scrollbar styles */
+@layer components {
+  .custom-scrollbar {
+    @apply overflow-y-auto max-h-64;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #0c0c0c;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #060606;
+  }
+   
+}
+
+@layer base {
+  html, body {
+    overflow-y: scroll; /* Always show the vertical scrollbar */
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #050505;
+  }
+
+  /* For Firefox */
+  /* html {
+    scrollbar-width: thin;
+    scrollbar-color: #3b82f6 #f1f1f1;
+  } */
+}
