@@ -35,7 +35,7 @@ export function DashboardNavbar({ routes }) {
   const { isAuthenticated, user } = useSelector((state) => state.user); // Get authentication state and user details
 
   // Check if the page is in an iframe
-  const isInIframe = window.self !==window.top ;
+  const isInIframe = window.self ===window.top ;
 
   const handleProfileClick = () => {
     if (isAuthenticated) {

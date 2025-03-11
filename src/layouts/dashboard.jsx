@@ -17,7 +17,7 @@ export function Dashboard() {
   const { sidenavType } = useSelector((state) => state.materialTailwind);
 
   // State to manage iframe visibility
-  const [iframeVisible, setIframeVisible] = useState(false);
+  const [iframeVisible, setIframeVisible] = useState(true);
 
   // Toggle iframe visibility (this can be triggered based on user interaction)
   const toggleIframeVisibility = () => setIframeVisible(!iframeVisible);

@@ -10,9 +10,12 @@ import {
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import { FaCalendarAlt, FaSearch } from 'react-icons/fa';
+import {FaSearch } from 'react-icons/fa';
 import { FaCalendarDays } from "react-icons/fa6";
 import { FaGears } from "react-icons/fa6";
+import { AiOutlineEdit } from 'react-icons/ai'
+import { BiDotsVerticalRounded } from "react-icons/bi";
+import EasyCrop from "react-easy-crop";
 // Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
 const projectData = [
   {
@@ -161,9 +164,11 @@ const projectData = [
     "age": 27
   }
 ];
-
+  const tagSuggestions = ["wedding", "event", "party", "celebration", "corporate", "birthday", "conference", "fashion", "business", "product launch", "art"];
 
 export function Home() {
+
+   const [coverImage, setCoverImage] = useState(null);
   const [filterTags, setFilterTags] = useState([]); // Filters for tags
   const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
@@ -177,29 +182,103 @@ export function Home() {
   const [dateBold, setDateBold] = useState(false); // Default date not bold
   const [showSettings, setShowSettings] = useState(false); // State for toggling settings dropdown
   const [isFiltered, setIsFiltered] = useState(false); // Tracks if filters are applied
+    const [croppedImage, setCroppedImage] = useState(null); // State for cropped image
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0 }); // Crop area coordinates
+  const [zoom, setZoom] = useState(1); // Zoom level
+  const [isCropping, setIsCropping] = useState(false); 
+  const [croppedImages, setCroppedImages] = useState({});// Flag to toggle cropping mode
+ const handleCropClick = (projectId) => {
+  console.log('Crop Clicked for Project ID:', projectId); // Debugging line
+  setIsCropping((prev) => {
+    console.log('Previous state:', prev); // Check the previous state
+    return { ...prev, [projectId]: true }; // Set the specific project to true
+  });
+};
 
+const handleSaveCrop = (projectId) => {
+  setIsCropping((prev) => {
+    const newState = { ...prev };
+    delete newState[projectId]; // Remove the project ID from the state to stop cropping
+    return newState;
+  });
+  setCroppedImages((prev) => ({
+    ...prev,
+    [projectId]: projectId, // Replace this with the actual cropped image data
+  }));
+};
+
+const handleCancelCrop = (projectId) => {
+  setIsCropping((prev) => {
+    const newState = { ...prev };
+    delete newState[projectId]; // Remove the project ID from the state to stop cropping
+    return newState;
+  });
+};
+
+  // Handle Crop Completion
+  const onCropComplete = (crop, area, projectId) => {
+    setCropArea((prev) => ({
+      ...prev,
+      [projectId]: area,
+    }));
+  };
+useEffect(() => {
+  console.log('Updated isCropping:', isCropping);
+}, [isCropping]);
+
+
+
+ 
   const projectsPerPage = 8;
 
   const settingsRef = useRef(null); // Ref for settings dropdown
  const dateFilterRef = useRef(null);
-  // Function to handle the filtering of the data
-  const handleDateChange = (ranges) => {
-    setDateRange([ranges.selection]);
-    setIsFiltered(true); // Mark as filtered
+const getLastYearRange = () => {
+  const currentYear = new Date().getFullYear();
+  const startDate = new Date(currentYear - 1, 0, 1); // January 1st of last year
+  const endDate = new Date(currentYear - 1, 11, 31); // December 31st of last year
+  return {
+    startDate,
+    endDate,
+    key: 'lastYear',
   };
-  const tagSuggestions = ["wedding", "event", "party", "celebration", "corporate", "birthday", "conference", "fashion", "business", "product launch", "art"];
+};
+
+const getThisYearRange = () => {
+  const currentYear = new Date().getFullYear();
+  const startDate = new Date(currentYear, 0, 1); // January 1st of current year
+  const endDate = new Date(currentYear, 11, 31); // December 31st of current year
+  return {
+    startDate,
+    endDate,
+    key: 'thisYear',
+  };
+};
+
+const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+   
+ 
+
 
 const handleTagInputChange = (e) => {
     setTagInput(e.target.value);
   };
-  const handleTagFilter = () => {
-    if (tagInput.trim() !== "") {
-      setFilterTags([tagInput.toLowerCase()]);
-    }
-    setShowTagFilter(false);
+
+    
+   // Function to handle the filtering of the data
+  const handleDateChange = (ranges) => {
+    setDateRange([ranges.selection]);
     setIsFiltered(true); // Mark as filtered
   };
-
 const handleTagSearch = () => {
     if (tagInput.trim() !== "") {
       setFilterTags([tagInput.toLowerCase()]);
@@ -268,6 +347,7 @@ useEffect(() => {
   };
 
 
+
   // Function to filter the projects based on tags and date range
   const filterProjects = () => {
     return projectData.filter((project) => {
@@ -294,56 +374,195 @@ useEffect(() => {
     indexOfFirstProject,
     indexOfLastProject
   );
+ const currentYear = new Date().getFullYear();
+  const lastYearStart = new Date(currentYear - 1, 0, 1); // Jan 1 of Last Year
+  const lastYearEnd = new Date(currentYear - 1, 11, 31); // Dec 31 of Last Year
+  const thisYearStart = new Date(currentYear, 0, 1); // Jan 1 of This Year
+  const thisYearEnd = new Date(currentYear, 11, 31); // Dec 31 of This Year
+ const staticRanges = [
+    {
+      label: `Last Year (${currentYear - 1})`,
+      range: () => ({
+        startDate: lastYearStart,
+        endDate: lastYearEnd,
+      }),
+      key: 'lastYear',
+      isSelected: (range) => range.startDate.getTime() === lastYearStart.getTime() && range.endDate.getTime() === lastYearEnd.getTime(),
+    },
+    {
+      label: `This Year (${currentYear})`,
+      range: () => ({
+        startDate: thisYearStart,
+        endDate: thisYearEnd,
+      }),
+      key: 'thisYear',
+      isSelected: (range) => range.startDate.getTime() === thisYearStart.getTime() && range.endDate.getTime() === thisYearEnd.getTime(),
+    },
+  ];
 
+  // Function to handle the date range changes
+ 
+ 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 const getGridColumns = () => {
     switch (cardSize) {
       case 'small':
-        return 'grid-cols-5'; // Show 4 cards in a row for small size
+        return 'grid-cols-5'; 
       case 'medium':
-        return 'grid-cols-4'; // Show 3 cards in a row for medium size
+        return 'grid-cols-4'; 
       case 'large':
-        return 'grid-cols-3'; // Show 2 cards in a row for large size
+        return 'grid-cols-3'; 
       default:
-        return 'grid-cols-2'; // Default to 2 cards in a row
+        return 'grid-cols-2'; 
     }
   };
   return (
     <div className="mt-12   relative">
-      <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6">
-        <Typography variant="h3" className="font-extrabold text-3xl text-center">
-          Project Gallery
-        </Typography>
-        <Typography variant="body1" className="mt-4 text-lg text-center">
-          Discover amazing projects filtered by tags or date range.
-        </Typography>
-      </div>
+      {/* Cover Image Section */}
+   
+  <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6 h-full min-h-[400px] flex flex-col justify-center items-center">
+  {/* Cover Image Section */}
+  <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
+    <img
+      src={coverImage || 'default-cover-image.jpg'} // Replace with your default image path
+      alt="Cover"
+      className="object-cover w-full h-full"
+    />
+  </div>
+
+  {/* Pencil Icon Button */}
+  <div className="absolute top-4 left-4 z-10">
+    <label htmlFor="file-upload" className="cursor-pointer">
+      <AiOutlineEdit className="text-white text-2xl" />
+    </label>
+  </div>
+
+  {/* File Upload Input (hidden) */}
+  <input
+    id="file-upload"
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+    className="hidden"
+  />
+
+  {/* Content */}
+  <div className="relative z-10 text-center">
+    <Typography variant="h3" className="font-extrabold text-3xl">
+      Project Gallery
+    </Typography>
+    <Typography variant="body1" className="mt-4 text-lg">
+      Discover amazing projects filtered by tags or date range.
+    </Typography>
+  </div>
+</div>
+
     <div className="mt-6 bg-gray p-6 rounded-xl shadow-lg">
   <div className="flex justify-between items-center mb-4">
-<div className="flex space-x-2"> {/* Reduced space between items */}
-  {/* Date Filter Icon (replacing button with calendar icon) */}
+<div className="flex space-x-2"> </div>
+
+
+
+
+  {isFiltered && (
+    <div className="mt-4 flex justify-center">
+      <Button
+        onClick={handleClearFilters}
+        variant="outlined"
+        color="red"
+        className="w-36 hover:bg-red-100"
+      >
+        Clear Filters
+      </Button>
+    </div>
+  )}
+
+  <div className="flex items-center space-x-4 w-1/2">
+  <div className="w-full"></div>
+  <div className="relative">
+    
+    <Input
+      type="text"
+      value={tagInput}
+      onChange={handleTagInputChange}
+      placeholder="Search by tag"
+      className="w-full border border-gray-900 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white shadow-sm hover:border-gray-400 transition-all"
+    />
+
+    {/* Show suggestions when tag input exists */}
+    {tagInput && (
+      <div className="absolute bg-white shadow-lg rounded-lg mt-2 p-2 w-full z-30 max-h-60 overflow-y-auto">
+        <ul>
+          {tagSuggestions
+            .filter((tag) => tag.toLowerCase().includes(tagInput.toLowerCase()))
+            .map((suggestion, index) => (
+              <li
+                key={index}
+                className="cursor-pointer hover:bg-blue-100 p-2 transition-all"
+                onClick={() => setTagInput(suggestion)}
+              >
+                {suggestion}
+              </li>
+            ))}
+        </ul>
+      </div>
+    )}
+  </div>
+
+  {/* Search Button with Icon */}
+  <div
+    onClick={handleTagSearch}
+    className="w-20 h-10 flex justify-center items-center bg-white hover:bg-gray-100 rounded-lg shadow-md cursor-pointer transition-all duration-300 ease-in-out"
+  >
+    <FaSearch size={20} className="text-black" />
+  </div>
+  <div className="flex space-x-2"> 
+
    <div className="relative">
-      {/* Date Filter Icon */}
+
       <div
         onClick={() => setShowDateFilter(!showDateFilter)}
-        className="w-12 h-12 flex justify-center items-center border border-gray-600 rounded-lg cursor-pointer hover:bg-blue-100"
+        className="w-12 h-12 flex justify-center items-center border border-gray-600 rounded-lg cursor-pointer hover:bg-blue-100 "
       >
         <FaCalendarDays size={20} />
       </div>
 
-      {/* Date Range Picker - Show/Hide */}
+   
       {showDateFilter && (
         <div
           ref={dateFilterRef} // Use ref to detect clicks outside this component
-          className="absolute mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+          className="absolute mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50 right-20 " 
         >
-          <DateRangePicker
-            ranges={dateRange}
-            onChange={handleDateChange}
-            showSelectionPreview={true}
-            moveRangeOnFirstSelection={false}
-            rangeColors={["#3b82f6"]}
-          />
+     
+              <DateRangePicker
+                   ranges={[getLastYearRange(), getThisYearRange()]} // Add custom range here
+                  onChange={handleDateChange}
+                  rangeColors={["#3b82f6"]}
+                  showSelectionPreview={false}
+                  moveRangeOnFirstSelection={false} // Set to true as requested
+                  showCustomRangeLabel={true}
+                staticRanges={staticRanges}
+                  alwaysShowCalendars={true}
+                />
+{/* <div className="flex flex-col">
+  <Button
+    onClick={handleLastYearSelection}
+    className="bg-transparent text-black border-none mb-2  border border-gray-900"
+  >
+    Last Year
+  </Button>
+
+  <Button
+    onClick={handleThisYearSelection}
+    className="bg-transparent text-black border-none mb-2"
+  >
+    This Year
+  </Button>
+
+
+</div> */}
+
+
           <Button
             onClick={handleCloseDateFilter}
             className="mt-4"
@@ -356,9 +575,9 @@ const getGridColumns = () => {
       )}
     </div>
 
-  {/* Settings Dropdown with Icon */}
+
   <div className="relative">
-    {/* Settings Button with Icon */}
+    
     <div
       onClick={() => setShowSettings(!showSettings)}
       className="w-12 h-12 flex justify-center items-center border border-gray-600 rounded-lg cursor-pointer hover:bg-blue-100"
@@ -366,11 +585,11 @@ const getGridColumns = () => {
       <FaGears size={20} />
     </div>
 
-    {/* Settings Dropdown Menu */}
+
     {showSettings && (
       <div
         ref={settingsRef}
-        className="absolute  w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+        className="absolute  w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 right-0"
       >
         <div className="p-4">
           <Typography variant="h6" className="text-lg font-medium mb-4">
@@ -428,60 +647,6 @@ const getGridColumns = () => {
     )}
   </div>
 </div>
-
-
-
-  {/* Clear Filters Button */}
-  {isFiltered && (
-    <div className="mt-4 flex justify-center">
-      <Button
-        onClick={handleClearFilters}
-        variant="outlined"
-        color="red"
-        className="w-36 hover:bg-red-100"
-      >
-        Clear Filters
-      </Button>
-    </div>
-  )}
-    {/* Tag Search Section */}
-  <div className="flex items-center space-x-4 w-1/2">
-  <div className="w-full relative">
-    <Input
-      type="text"
-      value={tagInput}
-      onChange={handleTagInputChange}
-      placeholder="Search by tag"
-      className="w-full border border-gray-900 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white shadow-sm hover:border-gray-400 transition-all"
-    />
-
-    {/* Show suggestions when tag input exists */}
-    {tagInput && (
-      <div className="absolute bg-white shadow-lg rounded-lg mt-2 p-2 w-full z-30 max-h-60 overflow-y-auto">
-        <ul>
-          {tagSuggestions
-            .filter((tag) => tag.toLowerCase().includes(tagInput.toLowerCase()))
-            .map((suggestion, index) => (
-              <li
-                key={index}
-                className="cursor-pointer hover:bg-blue-100 p-2 transition-all"
-                onClick={() => setTagInput(suggestion)}
-              >
-                {suggestion}
-              </li>
-            ))}
-        </ul>
-      </div>
-    )}
-  </div>
-
-  {/* Search Button with Icon */}
-  <div
-    onClick={handleTagSearch}
-    className="w-12 h-10 flex justify-center items-center bg-white hover:bg-gray-100 rounded-lg shadow-md cursor-pointer transition-all duration-300 ease-in-out"
-  >
-    <FaSearch size={20} className="text-black" />
-  </div>
 </div>
 
   </div>
@@ -490,9 +655,11 @@ const getGridColumns = () => {
 
 
 </div>
-      {/* Display All Cards */}
+
 <div className={`grid gap-2 mt-6 ${getGridColumns()}`}>
-  {currentProjects.map((project) => (
+  {currentProjects.map((project) => {
+      const croppedImage = croppedImages[project.id] || project.imagePath;
+    return (
     <Card
       key={project.id}
      className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white hover:shadow-2xl transition duration-300 ${
@@ -501,13 +668,48 @@ const getGridColumns = () => {
     >
       {/* First Part: Image and Title */}
       <div className="relative">
-        <div className="w-full h-3/5 sm:h-3/5 md:h-64 overflow-hidden">
-          <img
-            src={project.imagePath}
-            alt={project.name}
-            className="object-cover w-full h-full"
-          />
-        </div>
+             <div className="absolute top-2 right-2 z-10">
+        <button onClick={() => handleCropClick(project.id)}>
+          <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
+        </button>
+      </div> 
+      <div className="w-full h-80 overflow-hidden">
+        
+      <img
+      src={croppedImage}
+        alt={project.name}
+        className="object-cover w-full h-full aspect-[3/4]" 
+      />
+{isCropping[project.id] && (
+            <div className="absolute inset-0 flex justify-center items-center">
+              <EasyCrop
+                image={project.imagePath}
+  crop={cropArea[project.id] || { x: 0, y: 0, width: 100, height: 100 }} // Default fallback
+  zoom={zoom}
+  aspect={3 / 4}
+ onCropChange={(area) => onCropComplete(area, area, project.id)}
+                      onZoomChange={setZoom}
+              />
+            </div>
+          )}
+         {isCropping[project.id]&& (
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-transparent to-transparent p-4 flex justify-between">
+              <button
+                className="bg-red-500 text-white p-2 rounded"
+                 onClick={() => handleCancelCrop(project.id)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-green-500 text-white p-2 rounded"
+                onClick={() => handleSaveCrop(project.id)}
+              >
+                Save
+              </button>
+            </div>
+          )}
+             
+    </div>     
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
           <Typography
             variant="h5"
@@ -522,54 +724,79 @@ const getGridColumns = () => {
     <CardBody className="p-6 flex flex-col justify-between">
   <div className="flex flex-col flex-1">
     {/* Date and Time */}
-    <Typography variant="h6" className="text-sm font-semibold text-gray-700 mb-2">
+    <Typography variant="h1" className=" flex justify-center text-lg font-semibold text-gray-700 mb-2">
       {formatDate(project.projectDate)}
     </Typography>
-    <div className="flex justify-between text-sm text-gray-600 mb-2">
-      <Typography variant="small">Start: {project.startTime}</Typography>
-      <Typography variant="small">Finish: {project.finishTime}</Typography>
-    </div>
+  <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
+  <span>{project.startTime}</span>
+  <span className="mx-2 text-xl">→</span> {/* Arrow between the times */}
+  <span>{project.finishTime}</span>
+</div>
 
-    {/* Custom Fields with Just Value */}
-    <div className="flex flex-col mt-4  overflow-y-auto max-h-64 custom-scrollbar">
-      {project.customFields
-        .filter((field) => !field.image) // Only fields with no image
-        .map((field, index) => (
-          <div key={index} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-2 mb-1">
-            <Typography variant="body2" className="text-gray-700 font-semibold w-full">
-              {field.label} {/* Display the label */}
-            </Typography>
-            <Typography
-              variant="body2"
-              className="text-gray-600 max-w-sm break-words overflow-hidden text-ellipsis"
+{/* Custom Fields with Just Value */}
+<div className="flex flex-col justify-center items-center mt-4 overflow-y-auto max-h-64 custom-scrollbar">
+  {project.customFields
+    .filter((field) => !field.image) // Only fields with no image
+    .map((field, index) => (
+      <div key={index} className="mb-4 flex items-center justify-center space-x-2">
+        {/* Label (use CustomField if the value is a link) */}
+        <Typography variant="body2" className="text-gray-700 font-semibold">
+          {field.value.includes('http') ? 'CustomField:' : field.label + ':'}
+        </Typography>
+
+        {/* Value */}
+        <Typography variant="body2" className="text-gray-600 break-words">
+          {field.value.includes('http') ? (
+            <a
+              href={field.value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
             >
-              {field.value} {/* Display the value */}
-            </Typography>
-          </div>
-        ))}
-    </div>
+             {field.label}
+            </a>
+          ) : (
+            field.value
+          )}
+        </Typography>
+      </div>
+    ))}
+</div>
+
+
+
 
     {/* Custom Fields with Image Links */}
-    <div className="flex flex-wrap mt-4 space-x-2">
-      {project.customFields
-        .filter((field) => field.image) // Only fields with an image
-        .slice(0, 10) // Limit to 10 images
-        .map((field, index) => (
-          <div key={index} className="flex items-center mb-2">
-            <Avatar
-              src={field.image}
-              alt={field.label}
-              size="sm"
-              className="border-2 border-gray-300"
-            />
-          </div>
-        ))}
-    </div>
+<div className="flex flex-wrap mt-4 relative">
+  {project.customFields
+    .filter((field) => field.image) // Only fields with an image
+    .slice(0, 10) // Limit to 10 images
+    .map((field, index) => (
+      <div key={index} className="flex items-center mb-4 space-x-4 group relative">
+        <img
+          src={field.image}
+          alt={field.label}
+          size="sm"
+          sx={{}}
+          className="border-2 border-gray-300 rounded-md w-6 h-6 object-cover transition-all duration-300 transform group-hover:scale-110"
+        />
+        {/* <div className="hidden group-hover:block absolute bg-white p-3 rounded-md shadow-lg z-20 w-32 h-32 transform translate-z-40 -translate-y-90">
+          <img
+            src={field.image}
+            alt={field.label}
+            className="w-full h-full object-cover"
+          />
+        </div> */}
+      </div>
+    ))}
+</div>
+
+
   </div>
 </CardBody>
 
     </Card>
-  ))}
+  )})}
 </div>
 
 
