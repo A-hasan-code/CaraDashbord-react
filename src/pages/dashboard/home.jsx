@@ -26,7 +26,7 @@ const projectData = [
     "finishTime": "04:00 PM",
     "location": "New York City",
     "vendor": "ABC Weddings",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
+    "imagePath": "https://storage.googleapis.com/msgsndr/e1rwhC6H3sxPteIfdj8g/media/67aff0803e3c90c0608b0f85.png",
     "customFields": [
       
       { "label": "Custom Field 3", "value": "Custom Value 3",  },
@@ -52,7 +52,7 @@ const projectData = [
     "finishTime": "05:00 PM",
     "location": "Los Angeles",
     "vendor": "XYZ Weddings",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
+    "imagePath": "https://storage.googleapis.com/msgsndr/vcLxBfw01Nmv2VnlhtND/media/67d1a603c9434cd32b34fa7e.jpeg",
     "customFields": [
       { "label": "Custom Field 1", "value": "Custom Value 4", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
       { "label": "Custom Field 2", "value": "456", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
@@ -174,7 +174,7 @@ export function Home() {
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [showTagFilter, setShowTagFilter] = useState(false);
+
   const [tagInput, setTagInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [cardSize, setCardSize] = useState("small"); // Default card size
@@ -182,51 +182,120 @@ export function Home() {
   const [dateBold, setDateBold] = useState(false); // Default date not bold
   const [showSettings, setShowSettings] = useState(false); // State for toggling settings dropdown
   const [isFiltered, setIsFiltered] = useState(false); // Tracks if filters are applied
-    const [croppedImage, setCroppedImage] = useState(null); // State for cropped image
-  const [cropArea, setCropArea] = useState({ x: 0, y: 0 }); // Crop area coordinates
+   
+    const [cropArea, setCropArea] = useState({}); // Object to hold crop area for each project
   const [zoom, setZoom] = useState(1); // Zoom level
-  const [isCropping, setIsCropping] = useState(false); 
-  const [croppedImages, setCroppedImages] = useState({});// Flag to toggle cropping mode
- const handleCropClick = (projectId) => {
-  console.log('Crop Clicked for Project ID:', projectId); // Debugging line
-  setIsCropping((prev) => {
-    console.log('Previous state:', prev); // Check the previous state
-    return { ...prev, [projectId]: true }; // Set the specific project to true
-  });
-};
+   const [isCropping, setIsCropping] = useState({}); // Tracking crop mode for each project
+  const [croppedImages, setCroppedImages] = useState({}); // Store cropped images
 
-const handleSaveCrop = (projectId) => {
-  setIsCropping((prev) => {
-    const newState = { ...prev };
-    delete newState[projectId]; // Remove the project ID from the state to stop cropping
-    return newState;
-  });
-  setCroppedImages((prev) => ({
-    ...prev,
-    [projectId]: projectId, // Replace this with the actual cropped image data
-  }));
-};
-
-const handleCancelCrop = (projectId) => {
-  setIsCropping((prev) => {
-    const newState = { ...prev };
-    delete newState[projectId]; // Remove the project ID from the state to stop cropping
-    return newState;
-  });
-};
-
-  // Handle Crop Completion
-  const onCropComplete = (crop, area, projectId) => {
-    setCropArea((prev) => ({
+  // Handle the crop button click to toggle cropping for a project
+  const handleCropClick = (project) => {
+    setIsCropping((prev) => ({
       ...prev,
-      [projectId]: area,
+      [project.id]: true, // Enable cropping for the specific project
     }));
   };
-useEffect(() => {
-  console.log('Updated isCropping:', isCropping);
-}, [isCropping]);
+
+  // Handle cancel button click for crop mode
+  const handleCancelCrop = (project) => {
+    setIsCropping((prev) => {
+      const newState = { ...prev };
+      delete newState[project.id]; // Disable cropping for the specific project
+      return newState;
+    });
+  };
+
+  // This function will create a cropped image from the crop area
+  const getCroppedImg = (imagePath, crop) => {
+    console.log(crop);
+    const canvas = document.createElement('canvas');
+    const image = new Image();
+
+    image.crossOrigin = 'anonymous'; // Allow cross-origin image requests
+    image.src = imagePath;
+
+    return new Promise((resolve, reject) => {
+      image.onload = () => {
+        const ctx = canvas.getContext('2d');
+
+        const cropWidth = crop.width || image.width;  // Default to image width if not provided
+        const cropHeight = crop.height || image.height; // Default to image height if not provided
+
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+
+        // Draw the cropped image on canvas
+        ctx.drawImage(
+          image,
+          crop.x,
+          crop.y,
+          cropWidth,
+          cropHeight,
+          0,
+          0,
+          cropWidth,
+          cropHeight
+        );
+
+        const croppedImageData = canvas.toDataURL('image/png');
+        resolve(croppedImageData);
+      };
+
+      image.onerror = (err) => {
+        reject(err);
+      };
+    });
+  };
 
 
+  // Save the cropped image and update state
+  const handleSaveCrop = async (project) => {
+    setIsCropping((prev) => {
+      const newState = { ...prev };
+      delete newState[project.id]; // Disable cropping for the specific project
+      return newState;
+    });
+
+    // Get the crop data for this specific project
+    const croppedData = await getCroppedImg(project.imagePath, cropArea[project.id]);
+
+    if (croppedData) {
+      setCroppedImages((prev) => ({
+        ...prev,
+        [project.id]: croppedData, // Save cropped image in state
+      }));
+    }
+  };
+
+  // Handle the crop area change (for movement)
+  const onCropChange = (crop, area, projectId) => {
+    if (area) {
+      console.log("Updated crop area:", area);
+      setCropArea((prev) => ({
+        ...prev,
+        [projectId]: {
+          ...prev[projectId], // Keep other properties, like zoom, if needed
+          x: area.x || 0, // Ensure x position is always set
+          y: area.y || 0, // Ensure y position is always set
+        }
+      }));
+    }
+  };
+
+  // Handle crop size change (on zoom or resizing)
+  const onCropSizeChange = (crop, area, projectId) => {
+    if (crop.width && crop.height) {
+      console.log("Updated crop size:", crop.width, crop.height);
+      setCropArea((prev) => ({
+        ...prev,
+        [projectId]: {
+          ...prev[projectId], // Keep existing position (x, y)
+          width: crop.width, // Update the width of the crop area
+          height: crop.height, // Update the height of the crop area
+        }
+      }));
+    }
+  };
 
  
   const projectsPerPage = 8;
@@ -656,148 +725,117 @@ const getGridColumns = () => {
 
 </div>
 
-<div className={`grid gap-2 mt-6 ${getGridColumns()}`}>
-  {currentProjects.map((project) => {
-      const croppedImage = croppedImages[project.id] || project.imagePath;
-    return (
-    <Card
-      key={project.id}
-     className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white hover:shadow-2xl transition duration-300 ${
-    cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""
-  }`}
-    >
-      {/* First Part: Image and Title */}
-      <div className="relative">
-             <div className="absolute top-2 right-2 z-10">
-        <button onClick={() => handleCropClick(project.id)}>
-          <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
-        </button>
-      </div> 
-      <div className="w-full h-80 overflow-hidden">
-        
-      <img
-      src={croppedImage}
-        alt={project.name}
-        className="object-cover w-full h-full aspect-[3/4]" 
-      />
-{isCropping[project.id] && (
-            <div className="absolute inset-0 flex justify-center items-center">
-              <EasyCrop
-                image={project.imagePath}
-  crop={cropArea[project.id] || { x: 0, y: 0, width: 100, height: 100 }} // Default fallback
-  zoom={zoom}
-  aspect={3 / 4}
- onCropChange={(area) => onCropComplete(area, area, project.id)}
-                      onZoomChange={setZoom}
-              />
-            </div>
-          )}
-         {isCropping[project.id]&& (
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-transparent to-transparent p-4 flex justify-between">
-              <button
-                className="bg-red-500 text-white p-2 rounded"
-                 onClick={() => handleCancelCrop(project.id)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-green-500 text-white p-2 rounded"
-                onClick={() => handleSaveCrop(project.id)}
-              >
-                Save
-              </button>
-            </div>
-          )}
-             
-    </div>     
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
-          <Typography
-            variant="h5"
-            className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}
+    <div className={`grid gap-2 mt-6 ${getGridColumns()}`}>
+      {currentProjects.map((project) => {
+        const croppedImage = croppedImages[project.id] || project.imagePath; // Use cropped image if available
+        return (
+          <Card
+            key={project.id}
+            className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white hover:shadow-2xl transition duration-300 ${
+              cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""
+            }`}
           >
-            {project.name}
-          </Typography>
-        </div>
-      </div>
+            {/* First Part: Image and Title */}
+            <div className="relative">
+              <div className="absolute top-2 right-2 z-10">
+                <button onClick={() => handleCropClick(project)}>
+                  <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
+                </button>
+              </div>
+              <div className="w-full h-80 overflow-hidden">
+                <img
+                  src={croppedImage}
+                  alt={project.name}
+                  className="object-cover w-full h-full aspect-[3/4]"
+                />
 
-      {/* Second Part: Project Details and Custom Fields */}
-    <CardBody className="p-6 flex flex-col justify-between">
-  <div className="flex flex-col flex-1">
-    {/* Date and Time */}
-    <Typography variant="h1" className=" flex justify-center text-lg font-semibold text-gray-700 mb-2">
-      {formatDate(project.projectDate)}
-    </Typography>
-  <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
-  <span>{project.startTime}</span>
-  <span className="mx-2 text-xl">→</span> {/* Arrow between the times */}
-  <span>{project.finishTime}</span>
-</div>
+                {isCropping[project.id] && (
+                  <div className="absolute inset-0 flex justify-center items-center">
+                    <EasyCrop
+                   image={project.imagePath}
+                      crop={cropArea[project.id] || { x: 0, y: 0, width: 100, height: 100 }}
+                      zoom={zoom}
+                       aspect={4 / 3}
+                      onCropChange={(area) => onCropChange(null, area, project.id)}
+                      onZoomChange={setZoom}
+                      onCropSizeChange={(crop) => onCropSizeChange(crop, cropArea[project.id], project.id)} 
+                    />
+                  </div>
+                )}
+                {isCropping[project.id] && (
+                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-transparent to-transparent p-4 flex justify-between">
+                    <button className="bg-red-500 text-white p-2 rounded" onClick={() => handleCancelCrop(project)}>
+                      Cancel
+                    </button>
+                    <button className="bg-green-500 text-white p-2 rounded" onClick={() => handleSaveCrop(project)}>
+                      Save
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
+                <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
+                  {project.name}
+                </Typography>
+              </div>
+            </div>
 
-{/* Custom Fields with Just Value */}
-<div className="flex flex-col justify-center items-center mt-4 overflow-y-auto max-h-64 custom-scrollbar">
-  {project.customFields
-    .filter((field) => !field.image) // Only fields with no image
-    .map((field, index) => (
-      <div key={index} className="mb-4 flex items-center justify-center space-x-2">
-        {/* Label (use CustomField if the value is a link) */}
-        <Typography variant="body2" className="text-gray-700 font-semibold">
-          {field.value.includes('http') ? 'CustomField:' : field.label + ':'}
-        </Typography>
+            {/* Second Part: Project Details and Custom Fields */}
+            <CardBody className="p-6 flex flex-col justify-between">
+              <div className="flex flex-col flex-1">
+                <Typography variant="h1" className="flex justify-center text-lg font-semibold text-gray-700 mb-2">
+                  {formatDate(project.projectDate)}
+                </Typography>
+                <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
+                  <span>{project.startTime}</span>
+                  <span className="mx-2 text-xl">→</span>
+                  <span>{project.finishTime}</span>
+                </div>
 
-        {/* Value */}
-        <Typography variant="body2" className="text-gray-600 break-words">
-          {field.value.includes('http') ? (
-            <a
-              href={field.value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
-             {field.label}
-            </a>
-          ) : (
-            field.value
-          )}
-        </Typography>
-      </div>
-    ))}
-</div>
+                {/* Custom Fields */}
+                <div className="flex flex-col justify-center items-center mt-4 overflow-y-auto max-h-64 custom-scrollbar">
+                  {project.customFields
+                    .filter((field) => !field.image) // Only fields with no image
+                    .map((field, index) => (
+                      <div key={index} className="mb-4 flex items-center justify-center space-x-2">
+                        <Typography variant="body2" className="text-gray-700 font-semibold">
+                          {field.value.includes('http') ? 'CustomField:' : field.label + ':'}
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-600 break-words">
+                          {field.value.includes('http') ? (
+                            <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                              {field.label}
+                            </a>
+                          ) : (
+                            field.value
+                          )}
+                        </Typography>
+                      </div>
+                    ))}
+                </div>
 
+                {/* Custom Fields with Images */}
+                <div className="flex flex-wrap mt-4 relative">
+                  {project.customFields
+                    .filter((field) => field.image) // Only fields with an image
+                    .slice(0, 10) // Limit to 10 images
+                    .map((field, index) => (
+                      <div key={index} className="flex items-center mb-4 space-x-4 group relative">
+                        <img
+                          src={field.image}
+                          alt={field.label}
+                          className="border-2 border-gray-300 rounded-md w-6 h-6 object-cover transition-all duration-300 transform group-hover:scale-110"
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        );
+      })}
+    </div>
 
-
-
-    {/* Custom Fields with Image Links */}
-<div className="flex flex-wrap mt-4 relative">
-  {project.customFields
-    .filter((field) => field.image) // Only fields with an image
-    .slice(0, 10) // Limit to 10 images
-    .map((field, index) => (
-      <div key={index} className="flex items-center mb-4 space-x-4 group relative">
-        <img
-          src={field.image}
-          alt={field.label}
-          size="sm"
-          sx={{}}
-          className="border-2 border-gray-300 rounded-md w-6 h-6 object-cover transition-all duration-300 transform group-hover:scale-110"
-        />
-        {/* <div className="hidden group-hover:block absolute bg-white p-3 rounded-md shadow-lg z-20 w-32 h-32 transform translate-z-40 -translate-y-90">
-          <img
-            src={field.image}
-            alt={field.label}
-            className="w-full h-full object-cover"
-          />
-        </div> */}
-      </div>
-    ))}
-</div>
-
-
-  </div>
-</CardBody>
-
-    </Card>
-  )})}
-</div>
 
 
       {/* Pagination */}
