@@ -8,10 +8,51 @@ import {
   Tooltip,
   Progress,
 } from "@material-tailwind/react";
+import { useState } from "react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
+import { AgGridReact } from "ag-grid-react";
+import { FaEdit } from "react-icons/fa";
+import { MdDeleteSweep } from "react-icons/md";
+import "ag-grid-community/styles/ag-grid.css";
+import 'ag-grid-community/styles/ag-theme-material.css';
 
 export function Tables() {
+  // Static user data
+
+  const users = [
+    { id: 1, first_name: "John", last_name: "Doe", email: "john.doe@example.com", role: "Admin", status: "Active", date: "23/04/18", },
+    { id: 2, first_name: "Jane", last_name: "Smith", email: "jane.smith@example.com", role: "User", status: "non-Active", date: "23/04/18", },
+    { id: 3, first_name: "Emily", last_name: "Johnson", email: "emily.johnson@example.com", role: "Manager", status: "Active", date: "23/04/18", },
+    { id: 4, first_name: "Michael", last_name: "Brown", email: "michael.brown@example.com", role: "User", status: "non-Active", date: "23/04/18", },
+  ];
+
+  const rowData = users.map(user => ({
+    id: user.id,
+    name: `${user.first_name} ${user.last_name}`,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    date: user.date,
+  }));
+
+
+  const columnDefs = [
+    { headerName: "ID", field: "id", sortable: true, filter: false },
+    { headerName: "Name", field: "name", sortable: true, filter: false, width: 660 },
+    { headerName: "Email", field: "email", sortable: true, filter: false },
+    { headerName: "STATUS", field: "status", sortable: true, filter: false },
+    { headerName: "ROLE", field: "role", sortable: true, filter: false },
+    { headerName: "EMPLOYED", field: "date", sortable: true, filter: false },
+    {
+      headerName: "",
+      field: "actions",
+      filter: false,
+      cellRenderer: (params) => (
+        <span className="cursor-pointer">Edit</span>
+      ),
+    },
+  ];
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
@@ -21,90 +62,27 @@ export function Tables() {
           </Typography>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <table className="w-full min-w-[640px] table-auto">
-            <thead>
-              <tr>
-                {["author", "function", "status", "employed", ""].map((el) => (
-                  <th
-                    key={el}
-                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                  >
-                    <Typography
-                      variant="small"
-                      className="text-[11px] font-bold uppercase text-blue-gray-400"
-                    >
-                      {el}
-                    </Typography>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {authorsTableData.map(
-                ({ img, name, email, job, online, date }, key) => {
-                  const className = `py-3 px-5 ${
-                    key === authorsTableData.length - 1
-                      ? ""
-                      : "border-b border-blue-gray-50"
-                  }`;
-
-                  return (
-                    <tr key={name}>
-                      <td className={className}>
-                        <div className="flex items-center gap-4">
-                          <Avatar src={img} alt={name} size="sm" variant="rounded" />
-                          <div>
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-semibold"
-                            >
-                              {name}
-                            </Typography>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {email}
-                            </Typography>
-                          </div>
-                        </div>
-                      </td>
-                      <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                          {job[0]}
-                        </Typography>
-                        <Typography className="text-xs font-normal text-blue-gray-500">
-                          {job[1]}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <Chip
-                          variant="gradient"
-                          color={online ? "green" : "blue-gray"}
-                          value={online ? "online" : "offline"}
-                          className="py-0.5 px-2 text-[11px] font-medium w-fit"
-                        />
-                      </td>
-                      <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                          {date}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <Typography
-                          as="a"
-                          href="#"
-                          className="text-xs font-semibold text-blue-gray-600"
-                        >
-                          Edit
-                        </Typography>
-                      </td>
-                    </tr>
-                  );
-                }
-              )}
-            </tbody>
-          </table>
+          <div className="ag-theme-material" style={{ height: 'fit-content', maxWidth: "100%" }}>
+            <AgGridReact
+              rowData={rowData}
+              columnDefs={columnDefs}
+              pagination={true}
+              paginationPageSize={10}
+              domLayout='autoHeight'
+              animateRows={true}
+              headerClass="bg-gray-800 text-white"
+              enableSorting={true}
+              enableFilter={true}
+              defaultColDef={{
+                filter: true,
+                sortable: true,
+                resizable: true,
+              }}
+            />
+          </div>
         </CardBody>
       </Card>
+
       <Card>
         <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
           <Typography variant="h6" color="white">
@@ -135,11 +113,10 @@ export function Tables() {
             <tbody>
               {projectsTableData.map(
                 ({ img, name, members, budget, completion }, key) => {
-                  const className = `py-3 px-5 ${
-                    key === projectsTableData.length - 1
+                  const className = `py-3 px-5 ${key === projectsTableData.length - 1
                       ? ""
                       : "border-b border-blue-gray-50"
-                  }`;
+                    }`;
 
                   return (
                     <tr key={name}>
@@ -163,9 +140,8 @@ export function Tables() {
                               alt={name}
                               size="xs"
                               variant="circular"
-                              className={`cursor-pointer border-2 border-white ${
-                                key === 0 ? "" : "-ml-2.5"
-                              }`}
+                              className={`cursor-pointer border-2 border-white ${key === 0 ? "" : "-ml-2.5"
+                                }`}
                             />
                           </Tooltip>
                         ))}

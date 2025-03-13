@@ -8,36 +8,36 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useDispatch, useSelector } from "react-redux"; 
-import { login } from "@/Redux/slices/authslices"; // Adjusted to use the correct slice
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "@/Redux/slices/authslices";
 
 export function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const dispatch = useDispatch(); 
-  const { loading, error } = useSelector((state) => state.auth); // Accessing auth state
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
-    event.preventDefault(); 
+    event.preventDefault();
 
     if (!email) {
-      toast.error("Email is required."); 
+      toast.error("Email is required.");
       return;
     }
 
     if (!password) {
-      toast.error("Password is required."); 
+      toast.error("Password is required.");
       return;
     }
 
     try {
-      await dispatch(login({ email, password })).unwrap(); 
-      toast.success("Successfully signed in!"); 
-      navigate("/dashboard/home"); // Navigate to the dashboard
+      await dispatch(login({ email, password })).unwrap();
+      toast.success("Successfully signed in!");
+      navigate("/dashboard/home");
     } catch (error) {
-      toast.error(error.message || "Login failed."); 
+      toast.error(error.message || "Login failed.");
     }
   };
 
@@ -90,7 +90,10 @@ export function SignIn() {
               </button>
             </div>
           </div>
-          <Button className="mt-6" type="submit" fullWidth disabled={loading}>
+          <div className="flex justify-end cursor-pointer mt-3">
+            <Typography variant="small" color="blue-gray" className="font-medium">Forgot password?</Typography>
+          </div>
+          <Button className="mt-3" type="submit" fullWidth disabled={loading}>
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
           {error && <Typography className="text-red-500">{error}</Typography>}

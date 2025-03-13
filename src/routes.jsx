@@ -7,7 +7,7 @@ import {
   ServerStackIcon,
   RectangleStackIcon,
 } from "@heroicons/react/24/solid";
-import { Home, Profile, Tables,UsersTable,Settings } from "@/pages/dashboard";
+import { Home, Profile, Tables, UsersTable, Settings } from "@/pages/dashboard";
 
 import { SignIn, SignUp } from "@/pages/auth";
 
@@ -37,25 +37,25 @@ export const routes = [
         path: "/tables",
         element: <Tables />,
       },
-       {
-  icon: <RectangleStackIcon {...icon} />,
-  name: "Usertables",
-  path: "/users-table",
-  element: <UsersTable />,
-}
-,
-       {
-  icon: <Cog6ToothIcon {...icon} />,
-  name: "Settings",
-  path: "/Settings",
-  element: <Settings/>,
-}
+      {
+        icon: <RectangleStackIcon {...icon} />,
+        name: "Usertables",
+        path: "/users-table",
+        element: <UsersTable />,
+      }
+      ,
+      {
+        icon: <Cog6ToothIcon {...icon} />,
+        name: "Settings",
+        path: "/Settings",
+        element: <Settings />,
+      }
 
     ],
   },
- 
+
   {
- 
+
     layout: "auth",
     pages: [
       {
@@ -64,12 +64,12 @@ export const routes = [
         path: "/sign-in",
         element: <SignIn />,
       },
-      // {
-      //   icon: <RectangleStackIcon {...icon} />,
-      //   name: "sign up",
-      //   path: "/sign-up",
-      //   element: <SignUp />,
-      // },
+      {
+        icon: <RectangleStackIcon {...icon} />,
+        name: "sign up",
+        path: "/create-user",
+        element: <SignUp />,
+      },
     ],
   },
 ];
