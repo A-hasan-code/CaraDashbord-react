@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { FaLink } from 'react-icons/fa';
+import CustomFieldsSelection from '@/widgets/customfileds/Customfeld';
 export const Settings = () => {
     const [clientId, setClientId] = useState('');
     const [clientSecret, setClientSecret] = useState('');
@@ -51,6 +52,7 @@ export const Settings = () => {
     };
 
     return (
+    <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
             {/* First Card */}
 <Card className="w-full  p-4 shadow-md border rounded-lg">
@@ -159,6 +161,8 @@ export const Settings = () => {
         </Card>
 
             <ToastContainer />
+        </div>
+        <CustomFieldsSelection/>
         </div>
     );
 };
