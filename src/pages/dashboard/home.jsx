@@ -725,7 +725,7 @@ const getGridColumns = () => {
 
 </div>
 
-    <div className={`grid gap-2 mt-6 ${getGridColumns()}`}>
+    <div className={`grid gap-2 mt-5 ${getGridColumns()}`}>
       {currentProjects.map((project) => {
         const croppedImage = croppedImages[project.id] || project.imagePath; // Use cropped image if available
         return (
@@ -742,7 +742,7 @@ const getGridColumns = () => {
                   <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
                 </button>
               </div>
-              <div className="w-full h-80 overflow-hidden">
+              <div className="w-full h-90 overflow-hidden">
                 <img
                   src={croppedImage}
                   alt={project.name}
@@ -793,29 +793,29 @@ const getGridColumns = () => {
                 </div>
 
                 {/* Custom Fields */}
-                <div className="flex flex-col justify-center items-center mt-4 overflow-y-auto max-h-64 custom-scrollbar">
+                <div className="flex flex-col  mt-1 overflow-y-auto max-h-68 custom-scrollbar">
                   {project.customFields
                     .filter((field) => !field.image) // Only fields with no image
                     .map((field, index) => (
-                      <div key={index} className="mb-4 flex items-center justify-center space-x-2">
-                        <Typography variant="body2" className="text-gray-700 font-semibold">
+                      <div key={index} className="mb-2 flex items-center justify-center space-x-2 text-sm">
+                        <div variant="body2" className="text-gray-700 font-semibold text-sm " >
                           {field.value.includes('http') ? 'CustomField:' : field.label + ':'}
-                        </Typography>
-                        <Typography variant="body2" className="text-gray-600 break-words">
+                        </div>
+                        <div variant="body2" className="text-gray-600 break-words   text-" >
                           {field.value.includes('http') ? (
-                            <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                            <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">
                               {field.label}
                             </a>
                           ) : (
                             field.value
                           )}
-                        </Typography>
+                        </div>
                       </div>
                     ))}
                 </div>
 
                 {/* Custom Fields with Images */}
-                <div className="flex flex-wrap mt-4 relative">
+                <div className="flex flex-wrap mt-1 relative">
                   {project.customFields
                     .filter((field) => field.image) // Only fields with an image
                     .slice(0, 10) // Limit to 10 images
@@ -824,7 +824,7 @@ const getGridColumns = () => {
                         <img
                           src={field.image}
                           alt={field.label}
-                          className="border-2 border-gray-300 rounded-md w-6 h-6 object-cover transition-all duration-300 transform group-hover:scale-110"
+                          className="border-2 border-gray-300 rounded-md w-5 h-8 object-cover transition-all duration-300 transform group-hover:scale-110"
                         />
                       </div>
                     ))}
