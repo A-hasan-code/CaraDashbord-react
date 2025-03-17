@@ -9,6 +9,7 @@ import CustomFieldsSelection from '@/widgets/customfileds/Customfeld';
 import { useDispatch, useSelector } from 'react-redux';
 import { setClientData, setIsEditing } from '@/Redux/slices/secretIdSlice';
 
+
 export const Settings = () => {
     const [logo, setLogo] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -26,6 +27,7 @@ export const Settings = () => {
     const handleSave = () => {
         dispatch(setClientData({ clientId, clientSecret }));
         dispatch(setIsEditing(false));
+        toast.success('Settings saved successfully!');
     };
 
     const handleEdit = () => {
@@ -35,7 +37,7 @@ export const Settings = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         setLogo(file);
-        setImagePreview(URL.createObjectURL(file)); // Set the image preview
+        setImagePreview(URL.createObjectURL(file));
     };
 
     return (
