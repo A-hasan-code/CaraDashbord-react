@@ -1,13 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { loginUser, signupUser, logoutUser, fetchCurrentUser, updateUserProfile } from '@/Api/Users';
 import { toast } from 'react-toastify';
+import { loginDummyJson } from '@/data/dummyLogin';
 
 // Async thunks
 export const login = createAsyncThunk('auth/login', async (userData, { rejectWithValue }) => {
     try {
-        const response = await loginUser(userData);
-        localStorage.setItem('access_token', response.token);
-        return response;
+        // const response = await loginUser(userData);
+        localStorage.setItem('token', loginDummyJson?.token);
+        document.cookie = `token=${loginDummyJson?.token}; path=/; Secure`;
+        // return response;
     } catch (error) {
         return rejectWithValue(error.message);
     }
@@ -24,8 +26,8 @@ export const signup = createAsyncThunk('auth/signup', async (userData, { rejectW
 });
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-    await logoutUser();
-    localStorage.removeItem('access_token');
+    // await logoutUser();
+    localStorage.removeItem('token');
 });
 
 export const fetchUser = createAsyncThunk('auth/fetchUser', async (_, { rejectWithValue }) => {
@@ -52,13 +54,13 @@ const authSlice = createSlice({
         user: null,
         loading: false,
         error: null,
-        isAuthenticated: !!localStorage.getItem('access_token'),
+        isAuthenticated: !!localStorage.getItem('token'),
     },
     reducers: {
         clearUser: (state) => {
             state.user = null;
             state.isAuthenticated = false;
-            localStorage.removeItem('access_token');
+            localStorage.removeItem('token');
         },
     },
     extraReducers: (builder) => {

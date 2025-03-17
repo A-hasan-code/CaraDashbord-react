@@ -10,10 +10,11 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "@/Redux/slices/authslices";
+import { loginDummyJson } from "@/data/dummyLogin";
 
 export function SignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(loginDummyJson?.user?.email);
+  const [password, setPassword] = useState(loginDummyJson?.user?.password);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
@@ -90,9 +91,9 @@ export function SignIn() {
               </button>
             </div>
           </div>
-          <div className="flex justify-end cursor-pointer mt-3">
+          {/* <div className="flex justify-end cursor-pointer mt-3">
             <Typography variant="small" color="blue-gray" className="font-medium">Forgot password?</Typography>
-          </div>
+          </div> */}
           <Button className="mt-3" type="submit" fullWidth disabled={loading}>
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>

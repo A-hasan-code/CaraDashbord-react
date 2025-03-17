@@ -8,15 +8,25 @@ import {
   Button,
   Input,
 } from "@material-tailwind/react";
-import { PencilIcon, CheckIcon } from "@heroicons/react/24/solid";
+import {
+  PencilIcon,
+  CheckIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/solid";
 
 export function Profile() {
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "Richard Davisa",
     email: "richard.davisa@mail.com",
-    password: "******",
-    avatar: "/img/bruce-mars.jpeg", // Avatar image path
+    password: "Dummy@123", // Dummy password
+    confirmPassword: "Dummy@123", // Dummy confirm password
+    location: "New York, USA",
+    avatar: "/img/bruce-mars.jpeg",
   });
 
   const handleChange = (e) => {
@@ -25,6 +35,7 @@ export function Profile() {
       ...prevData,
       [name]: value,
     }));
+    setError(""); // Clear error when user types
   };
 
   const handleFileChange = (e) => {
@@ -34,7 +45,7 @@ export function Profile() {
       reader.onloadend = () => {
         setFormData((prevData) => ({
           ...prevData,
-          avatar: reader.result, // Update avatar with selected image
+          avatar: reader.result,
         }));
       };
       reader.readAsDataURL(file);
@@ -42,12 +53,23 @@ export function Profile() {
   };
 
   const handleSave = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     setIsEditing(false);
-    // Implement your save logic here, like calling an API or updating the state
   };
 
   const handleEdit = () => {
     setIsEditing(true);
+  };
+
+  const togglePasswordVisibility = (type) => {
+    if (type === "password") {
+      setShowPassword(!showPassword);
+    } else if (type === "confirmPassword") {
+      setShowConfirmPassword(!showConfirmPassword);
+    }
   };
 
   return (
@@ -60,8 +82,8 @@ export function Profile() {
       {/* Profile Card */}
       <Card className="mx-3 -mt-16 mb-10 lg:mx-4 border border-blue-gray-100 shadow-xl">
         <CardBody className="p-6 pb-10">
+          {/* Avatar Section + Name */}
           <div className="flex flex-col items-center">
-            {/* Avatar Section */}
             <div className="mb-8 flex justify-center items-center">
               <div className="relative flex flex-col items-center">
                 <Avatar
@@ -116,59 +138,104 @@ export function Profile() {
                 <Button
                   variant="outlined"
                   onClick={handleEdit}
-                  className="group flex items-center gap-2 px-5 py-2 text-blue-600 hover:text-white hover:bg-blue-600 border-2 border-blue-600 rounded-full transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                  <PencilIcon className="h-5 w-5 text-blue-600 group-hover:text-white transition-all duration-300" />
+                  className="group flex items-center gap-2 px-5 py-2 text-blue-600 hover:text-white hover:bg-blue-600 border-2 border-blue-600 rounded-full transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <PencilIcon className="h-5 w-5" />
                   Edit
                 </Button>
-
               </Tooltip>
             </div>
           </div>
 
-          {/* Edit Profile Section */}
-          <div className="flex flex-col gap-6 items-center">
-            <div className="w-1/2">
-              <Typography
-                variant="h6"
-                color="blue-gray"
-                className="mb-3 text-xl font-semibold"
-              >
-                Edit Profile Information
-              </Typography>
-              <div className="flex flex-col gap-6">
-                {/* Full Name */}
-                <Input
-                  label="Full Name"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full bg-transparent border-2 border-blue-gray-200 rounded-md"
-                />
+          {/* Edit Profile Info Section */}
+          <div className="mt-4">
+            <Typography
+              variant="h6"
+              color="blue-gray"
+              className="mb-3 text-xl font-semibold"
+            >
+              Basic Information
+            </Typography>
 
-                {/* Email */}
-                <Input
-                  label="Email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full bg-transparent border-2 border-blue-gray-200 rounded-md"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Full Name */}
+              <Input
+                label="Full Name"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
 
-                {/* Password */}
+              {/* Email */}
+              <Input
+                label="Email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+            </div>
+
+            {/* Password + Confirm Password */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {/* Password */}
+              <div className="relative">
                 <Input
                   label="Password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   disabled={!isEditing}
-                  type="password"
-                  className="w-full bg-transparent border-2 border-blue-gray-200 rounded-md"
+                  type={showPassword ? "text" : "password"}
                 />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility("password")}
+                  className="absolute right-3 top-2/4 -translate-y-2/4 text-blue-gray-500"
+                >
+                  {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="relative">
+                <Input
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  type={showConfirmPassword ? "text" : "password"}
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility("confirmPassword")}
+                  className="absolute right-3 top-2/4 -translate-y-2/4 text-blue-gray-500"
+                >
+                  {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                </button>
               </div>
             </div>
+
+            {/* Location */}
+            <div className="mt-6">
+              <Input
+                label="Location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+            </div>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <Typography color="red" className="mt-2 text-center">
+              {error}
+            </Typography>
+          )}
 
           {/* Save Button - Centered */}
           {isEditing && (

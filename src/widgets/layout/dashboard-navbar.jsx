@@ -24,7 +24,7 @@ import {
   setOpenConfigurator,
   setOpenSidenav,
 } from "@/Redux/slices/materialTailwindSlice";
-// import { logout } from "@/Redux/slices/userSlice"; // Assuming you have a logout action
+import { logout } from "@/Redux/slices/authslices";
 
 export function DashboardNavbar({ routes }) {
   console.log('routes', routes);
@@ -34,10 +34,15 @@ export function DashboardNavbar({ routes }) {
   const { fixedNavbar, openSidenav } = useSelector((state) => state.materialTailwind);
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
-  const { isAuthenticated, user } = useSelector((state) => state.user);
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.user);
 
   // Check if the page is in an iframe
   const isInIframe = window.self == window.top;
+  console.log('isAuthenticated', isAuthenticated);
+  console.log('isInIframe', isInIframe);
+
+
 
   const handleProfileClick = () => {
     if (isAuthenticated) {
@@ -46,9 +51,18 @@ export function DashboardNavbar({ routes }) {
   };
 
   const handleLogout = () => {
-    // Dispatch logout action
+    localStorage.removeItem("token"); // Remove token from localStorage
+    dispatch(logout()); // Dispatch logout action
     navigate("/auth/sign-in");
   };
+
+  //filterout when isAuthenticated is true
+  const filteredRoutes = routes.map((route) => ({
+    ...route,
+    pages: route.pages.filter(
+      (page) => !(page.name === 'sign in' && isAuthenticated)
+    ),
+  }));
 
   return (
     <>
@@ -60,9 +74,7 @@ export function DashboardNavbar({ routes }) {
       >
         <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
           <div className="capitalize">
-
           </div>
-
           {/* Right Side: Profile and Routes */}
           <div className="flex items-center gap-6">
             {/* Only show the sidenav toggle in non-iframe mode */}
@@ -76,6 +88,36 @@ export function DashboardNavbar({ routes }) {
                 <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
               </IconButton>
             )}
+            {/* Only show full menu if not in an iframe */}
+            {isInIframe && (
+              <div className="m-4 flex items-center gap-x-6">
+                {/* Loop through the routes and display the items horizontally */}
+                {filteredRoutes.map(({ layout, title, pages }, key) => (
+                  <div key={key} className="flex items-center space-x-6">
+                    {title && (
+                      <Typography variant="small" className="font-black uppercase opacity-75">
+                        {title}
+                      </Typography>
+                    )}
+                    {pages.map(({ icon, name, path }) => (
+                      <NavLink key={name} to={`/${layout}${path}`}>
+                        {({ isActive }) => (
+                          <Button
+                            variant={isActive ? "gradient" : "text"}
+                            className="flex items-center gap-2 px-4 capitalize"
+                          >
+                            {icon}
+                            <Typography color="inherit" className="font-medium capitalize">
+                              {name}
+                            </Typography>
+                          </Button>
+                        )}
+                      </NavLink>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Conditional Rendering Based on Authentication and iframe check */}
             {isInIframe && isAuthenticated && (
@@ -88,40 +130,6 @@ export function DashboardNavbar({ routes }) {
                   <MenuItem onClick={handleLogout}>Logout</MenuItem>
                 </MenuList>
               </Menu>
-            )}
-
-            {/* Only show full menu if not in an iframe */}
-            {isInIframe && (
-              <div className="m-4 flex items-center gap-x-6">
-                {/* Loop through the routes and display the items horizontally */}
-                {routes.map(({ layout, title, pages }, key) => (
-                  <div key={key} className="flex items-center space-x-6">
-                    {title && (
-                      <Typography variant="small" className="font-black uppercase opacity-75">
-                        {title}
-                      </Typography>
-                    )}
-                    {pages.map(({ icon, name, path }) => (
-                      name !== 'sign up' && (
-                        <NavLink key={name} to={`/${layout}${path}`}>
-                          {({ isActive }) => (
-                            <Button
-                              variant={isActive ? "gradient" : "text"}
-                              className="flex items-center gap-2 px-4 capitalize"
-                            >
-                              {icon}
-                              <Typography color="inherit" className="font-medium capitalize">
-                                {name}
-                              </Typography>
-                            </Button>
-                          )}
-                        </NavLink>
-                      )
-
-                    ))}
-                  </div>
-                ))}
-              </div>
             )}
 
             {/* Only show the settings and sign-in options if in an iframe */}

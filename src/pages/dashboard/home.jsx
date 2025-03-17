@@ -18,6 +18,11 @@ import SelectComponent from "@/constant/Select/Select";
 import RangeCalender from "@/constant/range calender/RangeCalender";
 import EasyCrop from "react-easy-crop";
 // Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
+
+//cropper
+import Cropper from "react-easy-crop";
+//cropper
+
 const projectData = [
   {
     "id": 1,
@@ -203,136 +208,141 @@ export function Home() {
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
   const [showDateFilter, setShowDateFilter] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [cardSize, setCardSize] = useState("small"); // Default card size
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY"); // Default date format
   const [dateBold, setDateBold] = useState(false); // Default date not bold
   const [showSettings, setShowSettings] = useState(false); // State for toggling settings dropdown
   const [isFiltered, setIsFiltered] = useState(false); // Tracks if filters are applied
-
-  const [cropArea, setCropArea] = useState({}); // Object to hold crop area for each project
-  const [zoom, setZoom] = useState(1); // Zoom level
-  const [isCropping, setIsCropping] = useState({}); // Tracking crop mode for each project
-  const [croppedImages, setCroppedImages] = useState({}); // Store cropped images
-
   const [selectedOptions, setSelectedOptions] = useState([]);
+
+  //cropper
+  const [imageSrc, setImageSrc] = useState(null); // Image source
+  const [crop, setCrop] = useState({ x: 0, y: 0 }); // Crop position
+  const [zoom, setZoom] = useState(1); // Zoom level
+  const [rotation, setRotation] = useState(0); // Rotation angle
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [imgUrl, setImgUrl] = useState(null);
+  const [activeProjectId, setActiveProjectId] = useState(null); // Track active project
+  const [croppedImages, setCroppedImages] = useState({});
+  //cropper
+
   const handleMultiSelectChange = (selected) => {
     setSelectedOptions(selected);
   };
-
   // Handle the crop button click to toggle cropping for a project
   const handleCropClick = (project) => {
-    setIsCropping((prev) => ({
-      ...prev,
-      [project.id]: true, // Enable cropping for the specific project
-    }));
+    setImageSrc(project?.imagePath);
+    setActiveProjectId(project?.id);
+    setIsCropping(true);
   };
-
   // Handle cancel button click for crop mode
-  const handleCancelCrop = (project) => {
-    setIsCropping((prev) => {
-      const newState = { ...prev };
-      delete newState[project.id]; // Disable cropping for the specific project
-      return newState;
-    });
+  const handleCancelCrop = () => {
+    setIsCropping(false);
+    setImageSrc(null);
+    setActiveProjectId(null);
+  };
+  // Handle crop completion
+  const onCropComplete = (_, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
   };
 
-  // This function will create a cropped image from the crop area
-  const getCroppedImg = (imagePath, crop) => {
-    const canvas = document.createElement('canvas');
-    const image = new Image();
+  // Convert Base64 to URL
+  const convertBase64ToUrl = (base64String) => {
+    const byteString = atob(base64String.split(",")[1]);
+    const mimeString = base64String.split(",")[0].split(":")[1].split(";")[0];
 
-    image.crossOrigin = 'anonymous'; // Allow cross-origin image requests
-    image.src = imagePath;
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    for (let i = 0; i < byteString.length; i++) {
+      uint8Array[i] = byteString.charCodeAt(i);
+    }
+
+    const blob = new Blob([arrayBuffer], { type: mimeString });
+    return URL.createObjectURL(blob);
+  };
+
+
+  // Save cropped image
+  const handleSaveCrop = async () => {
+    try {
+      const croppedImageFinal = await getCroppedImg(
+        imageSrc,
+        croppedAreaPixels,
+        rotation
+      );
+      setCroppedImages((prev) => ({
+        ...prev,
+        [activeProjectId]: croppedImageFinal, // Only update the active project
+      }));
+      setIsCropping(false);
+      setImageSrc(null);
+      setActiveProjectId(null);
+    } catch (e) {
+      console.error("Error cropping image:", e);
+    }
+  };
+
+  // Utility function to crop image
+  const getCroppedImg = async (imageSrc, pixelCrop, rotation = 0) => {
+    const image = new Image();
+    image.crossOrigin = "Anonymous";
+    image.src = imageSrc;
 
     return new Promise((resolve, reject) => {
       image.onload = () => {
-        const ctx = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-        const cropWidth = crop.width || image.width;  // Default to image width if not provided
-        const cropHeight = crop.height || image.height; // Default to image height if not provided
+        const maxSize = Math.max(image.width, image.height);
+        const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
 
-        canvas.width = cropWidth;
-        canvas.height = cropHeight;
+        canvas.width = safeArea;
+        canvas.height = safeArea;
 
-        // Draw the cropped image on canvas
+        ctx.translate(safeArea / 2, safeArea / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.translate(-safeArea / 2, -safeArea / 2);
+
         ctx.drawImage(
           image,
-          crop.x,
-          crop.y,
-          cropWidth,
-          cropHeight,
-          0,
-          0,
-          cropWidth,
-          cropHeight
+          safeArea / 2 - image.width / 2,
+          safeArea / 2 - image.height / 2
         );
 
-        const croppedImageData = canvas.toDataURL('image/png');
-        resolve(croppedImageData);
+        const data = ctx.getImageData(0, 0, safeArea, safeArea);
+
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+
+        ctx.putImageData(
+          data,
+          Math.round(0 - safeArea / 2 + image.width / 2 - pixelCrop.x),
+          Math.round(0 - safeArea / 2 + image.height / 2 - pixelCrop.y)
+        );
+
+        // Create a blob instead of Base64
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const croppedImageUrl = URL.createObjectURL(blob);
+            resolve(croppedImageUrl);
+          } else {
+            reject(new Error("Canvas is empty"));
+          }
+        }, "image/jpeg");
       };
 
-      image.onerror = (err) => {
-        reject(err);
+      image.onerror = (error) => {
+        reject(error);
       };
     });
   };
-
-
-  // Save the cropped image and update state
-  const handleSaveCrop = async (project) => {
-    setIsCropping((prev) => {
-      const newState = { ...prev };
-      delete newState[project.id]; // Disable cropping for the specific project
-      return newState;
-    });
-
-    // Get the crop data for this specific project
-    const croppedData = await getCroppedImg(project.imagePath, cropArea[project.id]);
-
-    if (croppedData) {
-      setCroppedImages((prev) => ({
-        ...prev,
-        [project.id]: croppedData, // Save cropped image in state
-      }));
-    }
-  };
-
-  // Handle the crop area change (for movement)
-  const onCropChange = (crop, area, projectId) => {
-    if (area) {
-      setCropArea((prev) => ({
-        ...prev,
-        [projectId]: {
-          ...prev[projectId], // Keep other properties, like zoom, if needed
-          x: area.x || 0, // Ensure x position is always set
-          y: area.y || 0, // Ensure y position is always set
-        }
-      }));
-    }
-  };
-
-  // Handle crop size change (on zoom or resizing)
-  const onCropSizeChange = (crop, area, projectId) => {
-    if (crop.width && crop.height) {
-      setCropArea((prev) => ({
-        ...prev,
-        [projectId]: {
-          ...prev[projectId], // Keep existing position (x, y)
-          width: crop.width, // Update the width of the crop area
-          height: crop.height, // Update the height of the crop area
-        }
-      }));
-    }
-  };
-
 
   const projectsPerPage = 8;
-
   const settingsRef = useRef(null); // Ref for settings dropdown
   const dateFilterRef = useRef(null);
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -343,8 +353,6 @@ export function Home() {
       reader.readAsDataURL(file);
     }
   };
-
-
   const handleTagSearch = () => {
     if (selectedOptions.length) {
       setIsFiltered(true);
@@ -352,7 +360,6 @@ export function Home() {
       setIsFiltered(false);
     }
   };
-
   const handleCloseDateFilter = () => {
     setShowDateFilter(false);
   };
@@ -391,7 +398,6 @@ export function Home() {
     };
   }, [showSettings, showDateFilter]); // Dependency array add ki takay effect update hota rahe
 
-
   // Function to format dates based on selected format
   const formatDate = (date) => {
     const dayOptions = { weekday: "long", day: "2-digit", month: "long", year: "numeric" };
@@ -409,8 +415,6 @@ export function Home() {
         return new Date(date).toLocaleDateString("en-US", dayOptions);
     }
   };
-
-
 
   // Function to filter the projects based on tags and date range
   const filterProjects = () => {
@@ -492,10 +496,6 @@ export function Home() {
       <div className="mt-6 bg-gray p-6 rounded-xl shadow-lg">
         <div className="flex justify-between items-center mb-4">
           <div className="flex space-x-2"> </div>
-
-
-
-
           {isFiltered && (
             <div className="mt-4 flex justify-center">
               <Button
@@ -637,7 +637,7 @@ export function Home() {
 
       <div className={`grid gap-2 mt-5 ${getGridColumns()}`}>
         {currentProjects.map((project) => {
-          const croppedImage = croppedImages[project.id] || project.imagePath; // Use cropped image if available
+          const croppedImage = croppedImages[project.id] || project.imagePath;
           return (
             <Card
               key={project.id}
@@ -657,37 +657,51 @@ export function Home() {
                     alt={project.name}
                     className="object-cover w-full h-full aspect-[3/4]"
                   />
-
-                  {isCropping[project.id] && (
-                    <div className="absolute inset-0 flex justify-center items-center">
-                      <EasyCrop
-                        image={project.imagePath}
-                        crop={cropArea[project.id] || { x: 0, y: 0, width: 100, height: 100 }}
-                        zoom={zoom}
-                        aspect={4 / 3}
-                        onCropChange={(area) => onCropChange(null, area, project.id)}
-                        onZoomChange={setZoom}
-                        onCropSizeChange={(crop) => onCropSizeChange(crop, cropArea[project.id], project.id)}
-                      />
-                    </div>
-                  )}
-                  {isCropping[project.id] && (
-                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-transparent to-transparent p-4 flex justify-between">
-                      <button className="bg-red-500 text-white p-2 rounded" onClick={() => handleCancelCrop(project)}>
-                        Cancel
-                      </button>
-                      <button className="bg-green-500 text-white p-2 rounded" onClick={() => handleSaveCrop(project)}>
+                </div>
+                {/* cropper */}
+                {isCropping && activeProjectId === project.id && (
+                  <div className="crop-container">
+                    <Cropper
+                      image={imageSrc}
+                      crop={crop}
+                      zoom={zoom}
+                      rotation={rotation}
+                      aspect={1} // Aspect ratio (1:1 for square)
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onRotationChange={setRotation}
+                      onCropComplete={onCropComplete}
+                    />
+                    {/* Save and Cancel Buttons */}
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+                      <button
+                        onClick={handleSaveCrop}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                      >
                         Save
                       </button>
+                      <button
+                        onClick={handleCancelCrop}
+                        className="bg-gray-400 text-white px-4 py-2 rounded-md"
+                      >
+                        Cancel
+                      </button>
                     </div>
-                  )}
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
-                  <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
-                    {project.name}
-                  </Typography>
-                </div>
+                  </div>
+                )}
               </div>
+
+              {/* cropper */}
+
+
+
+
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
+                <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
+                  {project.name}
+                </Typography>
+              </div>
+              {/* </div> */}
 
               {/* Second Part: Project Details and Custom Fields */}
               <CardBody className="p-6 flex flex-col justify-between">
@@ -765,7 +779,7 @@ export function Home() {
           Next
         </Button>
       </div>
-    </div>
+    </div >
   );
 }
 
