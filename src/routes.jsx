@@ -8,7 +8,7 @@ import {
   RectangleStackIcon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile, Tables, UsersTable, Settings } from "@/pages/dashboard";
-import { SignIn, SignUp } from "@/pages/auth";
+import { SignIn } from "@/pages/auth";
 import ProtectedRoute from "./ProtectedRoute";
 
 const icon = {

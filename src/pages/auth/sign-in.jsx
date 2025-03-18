@@ -91,9 +91,13 @@ export function SignIn() {
               </button>
             </div>
           </div>
-          {/* <div className="flex justify-end cursor-pointer mt-3">
-            <Typography variant="small" color="blue-gray" className="font-medium">Forgot password?</Typography>
-          </div> */}
+          <div className="flex justify-end cursor-pointer mt-3">
+            <Link to="/forgot-password">
+              <Typography variant="small" color="blue-gray" className="font-medium">
+                Forgot password?
+              </Typography>
+            </Link>
+          </div>
           <Button className="mt-3" type="submit" fullWidth disabled={loading}>
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>

@@ -8,11 +8,11 @@ import {
 } from '@/Api/Users'; // Adjust the import based on your API file structure
 
 // Initial state
-const initialState = {
-    users: [], // Initialized as an empty array
-    loading: false,
-    error: null,
-};
+// const initialState = {
+//     users: [], // Initialized as an empty array
+//     loading: false,
+//     error: null,
+// };
 
 // Async thunks
 export const fetchUsersThunk = createAsyncThunk('user/fetchUsers', async () => {
@@ -21,19 +21,22 @@ export const fetchUsersThunk = createAsyncThunk('user/fetchUsers', async () => {
 });
 
 export const addUserThunk = createAsyncThunk('user/addUser', async (userData) => {
-    const response = await addUser(userData);
+    // const response = await addUser(userData);
+    console.log('userData', userData);
     return response; // Assuming this returns the added user
 });
 
-export const editUserThunk = createAsyncThunk('user/editUser', async ({ id, userData }) => {
-    console.log("Editing user with ID:", id, "Data:", userData);
-    const response = await editUser(id, userData);
+export const editUserThunk = createAsyncThunk('user/editUser', async ({ userId, userData }) => {
+    console.log("Editing user with ID:", userId, "Data:", userData);
+    // const response = await editUser(id, userData);
     console.log(response)
     return response; // Assuming this returns the updated user
 });
 
 export const deleteUserThunk = createAsyncThunk('user/deleteUser', async (id) => {
-    await deleteUser(id);
+    console.log('user id', id);
+    
+    // await deleteUser(id);
     return id; // Return the ID of the deleted user
 });
 
@@ -71,61 +74,59 @@ const userSlice = createSlice({
 
             // Add user
             .addCase(addUserThunk.pending, (state) => {
-                state.loading = true;
+                state.isLoading = true;
             })
             .addCase(addUserThunk.fulfilled, (state, action) => {
-                state.users.push(action.payload);
-                // state.loading = false;
+                // state.users.push(action.payload);
+                state.isLoading = false;
                 // if (Array.isArray(state.users)) {
                 //     state.users.push(action.payload); // Add the new user
                 // }
             })
             .addCase(addUserThunk.rejected, (state, action) => {
-                state.loading = false;
+                state.isLoading = false;
                 state.error = action.error.message; // Set the error message
             })
 
             // Edit user
             .addCase(editUserThunk.pending, (state) => {
-                state.loading = true;
+                state.isLoading = true;
             })
             .addCase(editUserThunk.fulfilled, (state, action) => {
-                state.loading = false;
+                state.isLoading = false;
                 console.log("Edit user payload:", action.payload); // Log the payload
-                state.loading = false;
-                if (Array.isArray(state.users)) {
-                    const index = state.users.findIndex(user => user.id === action.payload.id);
-                    if (index !== -1) {
-                        state.users[index] = { ...state.users[index], ...action.payload }; // Update user
-                    } else {
-                        console.warn(`User with ID ${action.payload.id} not found for update.`);
-                    }
-                } else {
-                    console.error("Expected state.users to be an array, but found:", state.users);
-                }
+                // if (Array.isArray(state.users)) {
+                //     const index = state.users.findIndex(user => user.id === action.payload.id);
+                //     if (index !== -1) {
+                //         state.users[index] = { ...state.users[index], ...action.payload }; // Update user
+                //     } else {
+                //         console.warn(`User with ID ${action.payload.id} not found for update.`);
+                //     }
+                // } else {
+                //     console.error("Expected state.users to be an array, but found:", state.users);
+                // }
             })
             .addCase(editUserThunk.rejected, (state, action) => {
-                state.loading = false;
+                state.isLoading = false;
                 state.error = action.error.message; // Set the error message
             })
 
             // Delete user
             .addCase(deleteUserThunk.pending, (state) => {
-                state.loading = true;
+                state.isLoading = true;
             })
             .addCase(deleteUserThunk.fulfilled, (state, action) => {
-                console.log("Before deletion:", state.users);
-                state.loading = false;
-                const index = state.users.findIndex(user => user.id === action.payload.id);
-                if (index !== -1) {
-                    state.users[index] = action.payload;
-                }
+                state.isLoading = false;
+                // const index = state.users.findIndex(user => user.id === action.payload.id);
+                // if (index !== -1) {
+                //     state.users[index] = action.payload;
+                // }
                 // if (Array.isArray(state.users)) {
                 //     state.users = state.users.filter(user => user.id !== action.payload);
                 // }
             })
             .addCase(deleteUserThunk.rejected, (state, action) => {
-                state.loading = false;
+                state.isLoading = false;
                 state.error = action.error.message; // Set the error message
             })
 

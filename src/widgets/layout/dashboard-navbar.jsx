@@ -27,22 +27,16 @@ import {
 import { logout } from "@/Redux/slices/authslices";
 
 export function DashboardNavbar({ routes }) {
-  console.log('routes', routes);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { fixedNavbar, openSidenav } = useSelector((state) => state.materialTailwind);
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const { user } = useSelector((state) => state.user);
+  const { users } = useSelector((state) => state.users);
 
   // Check if the page is in an iframe
   const isInIframe = window.self == window.top;
-  console.log('isAuthenticated', isAuthenticated);
-  console.log('isInIframe', isInIframe);
-
-
 
   const handleProfileClick = () => {
     if (isAuthenticated) {
@@ -73,7 +67,12 @@ export function DashboardNavbar({ routes }) {
         blurred={fixedNavbar}
       >
         <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
-          <div className="capitalize">
+          {/* Left Side: Logo */}
+          <div className="capitalize flex items-center gap-2">
+            <img src="/img/Logo.png" alt="Logo" className="h-10 w-10 object-contain" />
+            <Typography variant="h6" className="font-bold text-black">
+              XortLogix
+            </Typography>
           </div>
           {/* Right Side: Profile and Routes */}
           <div className="flex items-center gap-6">
@@ -123,7 +122,7 @@ export function DashboardNavbar({ routes }) {
             {isInIframe && isAuthenticated && (
               <Menu>
                 <MenuHandler>
-                  <Avatar src={user?.avatar} alt="User Avatar" className="cursor-pointer" />
+                  <Avatar src={users?.avatar} alt="User Avatar" className="cursor-pointer" />
                 </MenuHandler>
                 <MenuList>
                   <MenuItem onClick={handleProfileClick}>Profile</MenuItem>

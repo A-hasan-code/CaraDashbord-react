@@ -16,7 +16,7 @@ import { AiOutlineEdit } from 'react-icons/ai'
 import { BiDotsVerticalRounded } from "react-icons/bi";
 import SelectComponent from "@/constant/Select/Select";
 import RangeCalender from "@/constant/range calender/RangeCalender";
-import EasyCrop from "react-easy-crop";
+import CachedIcon from '@mui/icons-material/Cached';
 // Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
 
 //cropper
@@ -227,6 +227,8 @@ export function Home() {
   const [activeProjectId, setActiveProjectId] = useState(null); // Track active project
   const [croppedImages, setCroppedImages] = useState({});
   //cropper
+
+  const [loading, setLoading] = useState(false);
 
   const handleMultiSelectChange = (selected) => {
     setSelectedOptions(selected);
@@ -511,6 +513,7 @@ export function Home() {
 
           <div className="flex items-center space-x-4 w-1/2">
             <div className="w-full"></div>
+            <CachedIcon className={`cursor-pointer ${loading ? 'animate-spin' : ''}`} style={{ fontSize: 25, transition: 'transform 0.3s ease' }} />
             <div className="relative w-full">
               <SelectComponent
                 options={options}
@@ -657,7 +660,13 @@ export function Home() {
                     alt={project.name}
                     className="object-cover w-full h-full aspect-[3/4]"
                   />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
+                    <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
+                      {project.name}
+                    </Typography>
+                  </div>
                 </div>
+
                 {/* cropper */}
                 {isCropping && activeProjectId === project.id && (
                   <div className="crop-container">
@@ -690,18 +699,7 @@ export function Home() {
                   </div>
                 )}
               </div>
-
               {/* cropper */}
-
-
-
-
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
-                <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
-                  {project.name}
-                </Typography>
-              </div>
-              {/* </div> */}
 
               {/* Second Part: Project Details and Custom Fields */}
               <CardBody className="p-6 flex flex-col justify-between">

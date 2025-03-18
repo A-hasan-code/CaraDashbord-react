@@ -7,8 +7,7 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import { FaLink } from 'react-icons/fa';
 import CustomFieldsSelection from '@/widgets/customfileds/Customfeld';
 import { useDispatch, useSelector } from 'react-redux';
-import { setClientData, setIsEditing } from '@/Redux/slices/secretIdSlice';
-
+import { clientSettings, setIsEditing, setClientData } from '@/Redux/slices/secretIdSlice';
 
 export const Settings = () => {
     const [logo, setLogo] = useState(null);
@@ -25,9 +24,12 @@ export const Settings = () => {
     };
 
     const handleSave = () => {
-        dispatch(setClientData({ clientId, clientSecret }));
-        dispatch(setIsEditing(false));
-        toast.success('Settings saved successfully!');
+        try {
+            dispatch(clientSettings({ clientId, clientSecret }));
+            toast.success('Settings saved successfully!');
+        } catch (error) {
+            toast.error(error.message || 'User dettings not save');
+        }
     };
 
     const handleEdit = () => {

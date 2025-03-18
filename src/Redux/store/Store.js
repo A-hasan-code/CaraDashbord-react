@@ -7,7 +7,7 @@ import clientReducer from '@/Redux/slices/secretIdSlice'
 const store = configureStore({
     reducer: {
         materialTailwind: materialTailwindReducer,
-        user: userReducer,
+        users: userReducer,
         auth: authReducer,
         clientIdsSet: clientReducer,
     },

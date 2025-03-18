@@ -75,7 +75,7 @@ const CustomFieldsSelection = () => {
     return { key: field.key, value: field.value };
   });
 
-   const columnDefs = [
+  const columnDefs = [
     { headerName: 'Field Key', field: 'key', sortable: true, filter: true, flex: 1 },
     { headerName: 'Field Value', field: 'value', sortable: true, filter: true, flex: 2 }
   ];
@@ -85,29 +85,35 @@ const CustomFieldsSelection = () => {
   return (
     <div className="p-6">
       <Card>
-        <CardHeader 
-          variant="gradient" 
-          color="gray" 
-          className="mb-8 p-6" 
+        <CardHeader
+          variant="gradient"
+          color="gray"
+          className="mb-8 p-6"
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>
-            Select Custom Fields
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <TextField
-              label="Search Fields"
-              variant="outlined"
-              size="small" // Make the search bar smaller
-              value={searchQuery}
-              onChange={handleSearch}
-              InputLabelProps={{
-                style: { color: 'white' } // Make the label white
-              }}
-              sx={{ backgroundColor: 'transparent', borderRadius: 1 ,border:'2px solid white'}} // Optional: to give the search bar a background color
-            />
-          </Box>
+          <div className='flex items-center justify-between'>
+            <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>
+              Select Custom Fields
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <TextField
+                label="Search Fields"
+                variant="outlined"
+                size="small" // Make the search bar smaller
+                value={searchQuery}
+                onChange={handleSearch}
+                InputLabelProps={{
+                  style: { color: 'white' } // Make the label white
+                }}
+                InputProps={{ style: { color: 'white' } }}
+                sx={{ backgroundColor: 'transparent', borderRadius: 1, border: '2px solid white' }} // Optional: to give the search bar a background color
+              />
+            </Box>
+
+
+          </div>
         </CardHeader>
+
 
         <CardBody>
           <Paper elevation={3}>
@@ -170,10 +176,10 @@ const CustomFieldsSelection = () => {
 
       <div className="mt-12">
         <Card style={{ height: '400px', width: '100%' }}>
-          <CardHeader           variant="gradient" 
-          color="gray" 
-          className="mb-8 p-6" 
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>  <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>Selected Fields </Typography></CardHeader>
+          <CardHeader variant="gradient"
+            color="gray"
+            className="mb-8 p-6"
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>  <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>Selected Fields </Typography></CardHeader>
           <CardBody className="ag-theme-alpine" style={{ height: '100%', width: '100%' }}>
             <AgGridReact
               columnDefs={columnDefs}
