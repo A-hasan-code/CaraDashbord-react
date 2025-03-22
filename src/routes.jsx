@@ -23,32 +23,32 @@ export const routes = [
         icon: <HomeIcon {...icon} />,
         name: "dashboard",
         path: "/home",
-        element: <ProtectedRoute element={<Home />} />,
+        element:<Home />
       },
       {
         icon: <UserCircleIcon {...icon} />,
         name: "profile",
         path: "/profile",
-        element: <ProtectedRoute element={<Profile />} />,
+        element:<Profile />,
       },
       {
         icon: <TableCellsIcon {...icon} />,
         name: "Contacts",
         path: "/tables",
-        element: <ProtectedRoute element={<Tables />} />,
+        element: <Tables />,
       },
       {
         icon: <RectangleStackIcon {...icon} />,
-        name: "Usertables",
+        name: "User",
         path: "/users-table",
-        element: <ProtectedRoute element={<UsersTable />} />,
+        element:<UsersTable />,
       }
       ,
       {
         icon: <Cog6ToothIcon {...icon} />,
         name: "Settings",
         path: "/Settings",
-        element: <ProtectedRoute element={<Settings />} />,
+        element:<Settings />,
       }
 
     ],
@@ -64,14 +64,11 @@ export const routes = [
         path: "/sign-in",
         element: <SignIn />,
       },
-      // {
-      //   icon: <RectangleStackIcon {...icon} />,
-      //   name: "sign up",
-      //   path: "/create-user",
-      //   element: <SignUp />,
-      // },
+    
+      
     ],
   },
+ 
 ];
 
 export default routes;

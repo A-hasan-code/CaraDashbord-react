@@ -1,13 +1,17 @@
 import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const ProtectedRoute = ({ element }) => {
-  // Correctly accessing the isAuthenticated state
-  const { isAuthenticated } = useSelector((state) => state.auth); 
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated } = useSelector((state) => state.user);
+console.log('hi',isAuthenticated)
+    // If the user is not authenticated, redirect to the login page
+    if (!isAuthenticated) {
+        return <Navigate to="/auth/sign-in" replace />;
+    }
 
-  console.log("ProtectedRoute - Authenticated:", isAuthenticated); // Log for debugging
-
-  return isAuthenticated ? element : <Navigate to="/auth/sign-in" replace />;
+    // Otherwise, render the children (protected content)
+    return children;
 };
+
 
 export default ProtectedRoute;

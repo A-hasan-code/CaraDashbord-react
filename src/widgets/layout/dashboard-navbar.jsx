@@ -20,23 +20,22 @@ import {
   Bars3Icon,
 } from "@heroicons/react/24/solid";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  setOpenConfigurator,
-  setOpenSidenav,
-} from "@/Redux/slices/materialTailwindSlice";
-import { logout } from "@/Redux/slices/authslices";
 
+import { logout } from "@/Redux/slices/User.Slice"; 
+import {getImageSettings } from '@/Redux/slices/secretIdSlice'; 
+import { useEffect } from "react";
 export function DashboardNavbar({ routes }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { fixedNavbar, openSidenav } = useSelector((state) => state.materialTailwind);
+
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
-  const { isAuthenticated } = useSelector((state) => state.auth);
-  const { users } = useSelector((state) => state.users);
-
+    const { logo: imagelogo } = useSelector((state) => state.clientIdsSet);
+  // Access user data and authentication status from the userSlice
+  const { user, isAuthenticated } = useSelector((state) => state.user);  // Assuming `user` slice holds the authentication status and user data
+  
   // Check if the page is in an iframe
-  const isInIframe = window.self == window.top;
+  const isInIframe = window.self === window.top;
 
   const handleProfileClick = () => {
     if (isAuthenticated) {
@@ -46,34 +45,40 @@ export function DashboardNavbar({ routes }) {
 
   const handleLogout = () => {
     localStorage.removeItem("token"); // Remove token from localStorage
-    dispatch(logout()); // Dispatch logout action
+    dispatch(logout());
+     dispatch(clearUser());  // Dispatch logout action from userSlice
     navigate("/auth/sign-in");
   };
 
-  //filterout when isAuthenticated is true
+  // Filter routes based on authentication status
   const filteredRoutes = routes.map((route) => ({
     ...route,
     pages: route.pages.filter(
       (page) => !(page.name === 'sign in' && isAuthenticated)
     ),
   }));
+  useEffect(()=>{
+    dispatch(getImageSettings());
+  },[dispatch])
 
   return (
     <>
+
       <Navbar
-        color={fixedNavbar ? "white" : "transparent"}
-        className={`rounded-xl transition-all ${fixedNavbar ? "sticky top-4 z-40 py-3 shadow-md shadow-blue-gray-500/5" : "px-0 py-1"}`}
+        color="transparent"
+        className={`rounded-xl transition-all sticky top-4 z-40 py-3   px-0 py-1`}
         fullWidth
-        blurred={fixedNavbar}
+        // blurred={fixedNavbar}
       >
         <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
           {/* Left Side: Logo */}
           <div className="capitalize flex items-center gap-2">
-            <img src="/img/Logo.png" alt="Logo" className="h-10 w-10 object-contain" />
-            <Typography variant="h6" className="font-bold text-black">
+            <img src={`http://localhost:5000${imagelogo}`} alt="Logo" className="h-20 w-20 object-contain" />
+            {/* <Typography variant="h6" className="font-bold text-black">
               XortLogix
-            </Typography>
+            </Typography> */}
           </div>
+
           {/* Right Side: Profile and Routes */}
           <div className="flex items-center gap-6">
             {/* Only show the sidenav toggle in non-iframe mode */}
@@ -82,15 +87,15 @@ export function DashboardNavbar({ routes }) {
                 variant="text"
                 color="blue-gray"
                 className="grid xl:hidden"
-              // onClick={() => dispatch(setOpenSidenav(!openSidenav))}
+                // onClick={() => dispatch(setOpenSidenav(!openSidenav))}
               >
                 <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
               </IconButton>
             )}
-            {/* Only show full menu if not in an iframe */}
+
+            {/* Loop through routes if not in iframe */}
             {isInIframe && (
               <div className="m-4 flex items-center gap-x-6">
-                {/* Loop through the routes and display the items horizontally */}
                 {filteredRoutes.map(({ layout, title, pages }, key) => (
                   <div key={key} className="flex items-center space-x-6">
                     {title && (
@@ -118,11 +123,11 @@ export function DashboardNavbar({ routes }) {
               </div>
             )}
 
-            {/* Conditional Rendering Based on Authentication and iframe check */}
+            {/* User Menu */}
             {isInIframe && isAuthenticated && (
               <Menu>
                 <MenuHandler>
-                  <Avatar src={users?.avatar} alt="User Avatar" className="cursor-pointer" />
+                  <Avatar src={`http://localhost:5000/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
                 </MenuHandler>
                 <MenuList>
                   <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
@@ -131,17 +136,9 @@ export function DashboardNavbar({ routes }) {
               </Menu>
             )}
 
-            {/* Only show the settings and sign-in options if in an iframe */}
+            {/* Show settings and sign-in options for non-iframe case */}
             {!isInIframe && (
               <div className="flex gap-6">
-                <Link to="/auth/sign-in">
-                  <Button variant="text" className="flex items-center gap-2 px-4">
-                    <Cog6ToothIcon className="h-6 w-6" />
-                    <Typography color="inherit" className="font-medium capitalize">
-                      Sign In
-                    </Typography>
-                  </Button>
-                </Link>
                 <Link to="/settings">
                   <Button variant="text" className="flex items-center gap-2 px-4">
                     <Cog6ToothIcon className="h-6 w-6" />
@@ -150,25 +147,54 @@ export function DashboardNavbar({ routes }) {
                     </Typography>
                   </Button>
                 </Link>
+                {isAuthenticated ? (
+                  <Menu>
+                    <MenuHandler>
+                      <Avatar src={`http://localhost:5000/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
+                    </MenuHandler>
+                    <MenuList>
+                      <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
+                      <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                    </MenuList>
+                  </Menu>
+                ) : (
+                  <Link to="/auth/sign-in">
+                    <Button variant="text" className="flex items-center gap-2 px-4">
+                      <Cog6ToothIcon className="h-6 w-6" />
+                      <Typography color="inherit" className="font-medium capitalize">
+                        Sign In
+                      </Typography>
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
           </div>
         </div>
       </Navbar>
-      <Breadcrumbs className={`bg-transparent p-0 transition-all ${fixedNavbar ? "mt-1" : ""}`}>
-        <Link to={`/${layout}`}>
-          <Typography variant="small" color="blue-gray" className="font-normal opacity-50 transition-all hover:text-blue-500 hover:opacity-100">
-            {layout.replace(/\b\w/g, (char) => char.toUpperCase())}
-          </Typography>
 
-        </Link>
-        <Typography variant="small" color="blue-gray" className="font-normal">
-          {page.replace(/\b\w/g, (char) => char.toUpperCase())}
-        </Typography>
-      </Breadcrumbs>
+      {/* Breadcrumbs */}
+<Breadcrumbs className={`bg-transparent p-1 transition-all mt-4`}>
+  <Typography 
+    variant="small" 
+    color="blue-gray" 
+    className="font-normal opacity-50 transition-all hover:text-blue-500 hover:opacity-100">
+    {layout.replace(/\b\w/g, (char) => char.toUpperCase())}
+  </Typography>
+  <Typography 
+    variant="small" 
+    color="blue-gray" 
+    className="font-normal p-0">
+    {page ? page.replace(/\b\w/g, (char) => char.toUpperCase()) : "Dashboard"}
+  </Typography>
+</Breadcrumbs>
+
+
+
       <Typography variant="h6" color="blue-gray">
-        {page.replace(/\b\w/g, (char) => char.toUpperCase())}
-      </Typography></>
+        {page ? page.replace(/\b\w/g, (char) => char.toUpperCase()) : "Dashboard"}
+      </Typography>
+    </>
   );
 }
 

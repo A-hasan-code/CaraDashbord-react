@@ -1,103 +1,109 @@
-import apiClient from '@/Api/Axios';
+import Axios from './Axios';
+
+// Register a new user
+export const registerUser = async (userData) => {
+    try {
+        const response = await Axios.post('/register', userData);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;  // Handle error
+    }
+};
 
 // Login user
-export const loginUser = async (userData) => {
+export const loginUser = async (loginData) => {
     try {
-        const response = await apiClient.post('/login', userData);
+        const response = await Axios.post('/login', loginData);
+        console.log(response.data)
         return response.data;
     } catch (error) {
-        throw error.response?.data || 'Login failed';
+        throw error.response.data;  // Handle error
     }
 };
 
-// Signup user
-export const signupUser = async (userData) => {
+// Get user profile (Authenticated)
+export const getUserProfile = async () => {
     try {
-        const response = await apiClient.post('/signup', userData);
+        const response = await Axios.get('/profile');
         return response.data;
     } catch (error) {
-        throw error.response?.data || 'Signup failed';
+        throw error.response.data;
     }
 };
 
-// Logout user
+// Update user profile (Authenticated)
+export const updateUserProfile = async (updateData) => {
+    try {
+        const response = await Axios.put('/profile', updateData);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+};
+
+// Forgot password
+export const forgotPassword = async (email) => {
+    try {
+        const response = await Axios.post('/forgot-password', { email });
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+};
+
+// Reset password
+export const resetPassword = async (resetToken, newPassword) => {
+    try {
+        const response = await Axios.put(`/reset-password/${resetToken}`, { password: newPassword });
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+};
+
+// Get all users (Authenticated)
+export const getAllUsers = async () => {
+    try {
+        const response = await Axios.get('/getall');
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+};
+
+// Logout user (Authenticated)
 export const logoutUser = async () => {
     try {
-        await apiClient.post('/logout');
-        localStorage.removeItem('access_token');
-        return true;
-    } catch (error) {
-        throw error.response?.data || 'Logout failed';
-    }
-};
-
-// Fetch current user
-export const fetchCurrentUser = async () => {
-    try {
-        const response = await apiClient.get('/me/user');
-        console.log("user", response.data)
+        const response = await Axios.get('/logout');
         return response.data;
     } catch (error) {
-        throw error.response?.data || 'Failed to fetch current user';
+        throw error.response.data;
     }
 };
 
-// Fetch users list
-export const fetchUsers = async () => {
+// Update user by superadmin
+export const updateUserBySuperadmin = async (userId, updatedData) => {
     try {
-        const response = await apiClient.get('/users');
-        return response.data;
+        console.log('Sending update request for user:', userId, 'with data:', updatedData);
+        const response = await Axios.put(`/edit/${userId}`, updatedData);
+        console.log('Response data from updateUserBySuperadmin:', response.data);
+        return response.data;  // Return the response if needed
     } catch (error) {
-        throw error.response?.data || 'Failed to fetch users';
+        console.error('Error updating user:', error.response?.data || error.message);
+        return error.response?.data || error.message;  // Return the error message if needed
     }
 };
 
-// Add a new user
-export const addUser = async (userData) => {
+// Delete user by superadmin
+export const deleteUserBySuperadmin = async (userId) => {
     try {
-        const response = await apiClient.post('/users', userData);
-        return response.data;
+        console.log('Sending delete request for user:', userId);
+        const response = await Axios.delete(`/adminuser/${userId}`);
+        console.log('Response data from deleteUserBySuperadmin:', response.data);
+        return response.data;  // Return the response if needed
     } catch (error) {
-        throw error.response?.data || 'Failed to add user';
+        console.error('Error deleting user:', error.response?.data || error.message);
+        return error.response?.data || error.message;  // Return the error message if needed
     }
 };
 
-// Edit a user
-export const editUser = async (id, userData) => {
-    try {
-        const response = await apiClient.post(`/users/${id}`, userData);
-        return response.data; // Ensure this returns the updated user
-    } catch (error) {
-        throw error.response?.data || 'Failed to edit user';
-    }
-};
-
-// Delete a user
-export const deleteUser = async (id) => {
-    try {
-        await apiClient.delete(`/users/${id}`);
-        return true;
-    } catch (error) {
-        throw error.response?.data || 'Failed to delete user';
-    }
-};
-
-// Change user status
-export const changeUserStatus = async (id, status) => {
-    try {
-        const response = await apiClient.get(`/users/${id}/status`, { status });
-        return response.data;
-    } catch (error) {
-        throw error.response?.data || 'Failed to change user status';
-    }
-};
-
-// Update user profile
-export const updateUserProfile = async (profileData) => {
-    try {
-        const response = await apiClient.post('/user/profile', profileData);
-        return response.data;
-    } catch (error) {
-        throw error.response?.data || 'Failed to update profile';
-    }
-};

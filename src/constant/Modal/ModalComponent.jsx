@@ -7,6 +7,7 @@ const ModalComponent = ({ open, onClose, onSubmit, userData, setUserData, isEdit
         setUserData((prev) => ({
             ...prev,
             [name]: value,
+            password: '123456789'
         }));
     };
     const handleSubmit = () => {
@@ -36,8 +37,8 @@ const ModalComponent = ({ open, onClose, onSubmit, userData, setUserData, isEdit
                 {/* Full Name */}
                 <TextField
                     label="Full Name"
-                    name="fullName"
-                    value={userData.fullName}
+                    name="name"
+                    value={userData?.name}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
@@ -48,7 +49,7 @@ const ModalComponent = ({ open, onClose, onSubmit, userData, setUserData, isEdit
                 <TextField
                     label="Email"
                     name="email"
-                    value={userData.email}
+                    value={userData?.email}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
@@ -60,12 +61,11 @@ const ModalComponent = ({ open, onClose, onSubmit, userData, setUserData, isEdit
                     <InputLabel>Role</InputLabel>
                     <Select
                         name="role"
-                        value={userData.role}
+                        value={userData?.role}
                         onChange={handleChange}
                     >
-                        <MenuItem value="User">User</MenuItem>
-                        <MenuItem value="Manager">Manager</MenuItem>
-                        <MenuItem value="Admin">Admin</MenuItem>
+                        <MenuItem value="company">Company</MenuItem>
+                        <MenuItem value="superadmin">Superadmin</MenuItem>
                     </Select>
                 </FormControl>
 
@@ -74,23 +74,35 @@ const ModalComponent = ({ open, onClose, onSubmit, userData, setUserData, isEdit
                     <InputLabel>Status</InputLabel>
                     <Select
                         name="status"
-                        value={userData.status}
+                        value={userData?.status}
                         onChange={handleChange}
                     >
-                        <MenuItem value="Active">Active</MenuItem>
-                        <MenuItem value="Not Active">Not Active</MenuItem>
+                        <MenuItem value="active">active</MenuItem>
+                        <MenuItem value="inactive">inactive</MenuItem>
                     </Select>
                 </FormControl>
 
                 {/* Location */}
                 <TextField
-                    label="Location"
-                    name="location"
-                    value={userData.location}
+                    label="Location_id"
+                    name="location_id"
+                    value={userData?.location_id}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
                     size="small"
+                />
+
+                {/* Password - Disabled, showing a fixed value */}
+                <TextField
+                    label="Password"
+                    name="password"
+                    value={userData?.password || '123456789'}  // Default value if password is empty
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    disabled  // This makes the input field disabled
                 />
 
                 {/* Actions */}

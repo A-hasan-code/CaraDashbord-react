@@ -1,157 +1,222 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import {
-    fetchUsers,
-    addUser,
-    editUser,
-    deleteUser,
-    changeUserStatus,
-} from '@/Api/Users'; // Adjust the import based on your API file structure
+import { registerUser, loginUser, getUserProfile, updateUserProfile, forgotPassword, resetPassword, getAllUsers, logoutUser, updateUserBySuperadmin, deleteUserBySuperadmin } from '../../Api/Users';
 
-// Initial state
-// const initialState = {
-//     users: [], // Initialized as an empty array
-//     loading: false,
-//     error: null,
-// };
-
-// Async thunks
-export const fetchUsersThunk = createAsyncThunk('user/fetchUsers', async () => {
-    const response = await fetchUsers();
-    return response; // Assuming this returns an array of users
+// Async thunks for API calls
+export const register = createAsyncThunk('user/register', async (userData, { rejectWithValue }) => {
+    try {
+        const data = await registerUser(userData);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error);
+    }
 });
 
-export const addUserThunk = createAsyncThunk('user/addUser', async (userData) => {
-    // const response = await addUser(userData);
-    console.log('userData', userData);
-    return response; // Assuming this returns the added user
+export const login = createAsyncThunk('user/login', async (loginData, { rejectWithValue, dispatch }) => {
+    try {
+        const data = await loginUser(loginData);
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+           
+            dispatch(setUser(data.user)); // Set user and authentication state
+        }
+        return data;
+    } catch (error) {
+        return rejectWithValue(error);
+    }
 });
 
-export const editUserThunk = createAsyncThunk('user/editUser', async ({ userId, userData }) => {
-    console.log("Editing user with ID:", userId, "Data:", userData);
-    // const response = await editUser(id, userData);
-    console.log(response)
-    return response; // Assuming this returns the updated user
+export const fetchUserProfile = createAsyncThunk('user/fetchUserProfile', async (_, { rejectWithValue }) => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No token found');
+        }
+        const data = await getUserProfile(); // Fetch user profile data
+        return data;
+    } catch (error) {
+        return rejectWithValue(error);
+    }
 });
 
-export const deleteUserThunk = createAsyncThunk('user/deleteUser', async (id) => {
-    console.log('user id', id);
-    
-    // await deleteUser(id);
-    return id; // Return the ID of the deleted user
+export const updateProfile = createAsyncThunk('user/updateProfile', async (updateData, { rejectWithValue }) => {
+    try {
+        const data = await updateUserProfile(updateData); // Update user profile
+        return data;
+    } catch (error) {
+        return rejectWithValue(error);
+    }
 });
 
-export const changeUserStatusThunk = createAsyncThunk('user/changeUserStatus', async ({ id, status }) => {
-    const response = await changeUserStatus(id, status);
-    return response; // Assuming this returns the updated user status
+export const logout = createAsyncThunk('user/logout', async (_, { dispatch }) => {
+    try {
+        localStorage.removeItem('token'); // Remove token from localStorage
+        dispatch(clearUser()); // Clear user and authentication state
+    } catch (error) {
+        return rejectWithValue(error);
+    }
 });
+export const fetchAllUsers = createAsyncThunk('users/getAll', async (_, { rejectWithValue }) => {
+    try {
+        const data = await getAllUsers();
+        return data;
+    } catch (error) {
+        return rejectWithValue(error);
+    }
+});
+export const updateUserSuperadmin = createAsyncThunk(
+    'user/updateBySuperadmin',
+    async ({ userId, updatedData }, { rejectWithValue }) => {
+        try {
+            const data = await updateUserBySuperadmin(userId, updatedData);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
 
-// User slice
+export const deleteUserSuperadmin = createAsyncThunk(
+    'user/deleteBySuperadmin',
+    async (userId, { rejectWithValue }) => {
+        try {
+            const data = await deleteUserBySuperadmin(userId);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+// Initial state for the slice
+const initialState = {
+    user: null,
+    isAuthenticated: localStorage.getItem('token') ? true : false,
+    loading: false,
+    error: null,
+    users: [],
+};
+
+// The slice definition
 const userSlice = createSlice({
-    name: 'users',
-    initialState: {
-        users: [],
-        selectedUser: null,
-        isLoading: false,
-        error: null,
+    name: 'user',
+    initialState,
+    reducers: {
+        setUser: (state, action) => {
+            state.user = action.payload;
+            state.isAuthenticated = true;
+            state.loading = false;
+            state.error = null;
+        },
+        clearError: (state) => {
+            state.error = null;
+        },
+        clearUser: (state) => {
+            state.user = null;
+            state.isAuthenticated = false;
+            state.loading = false;
+            state.error = null;
+        },
+        setUserFromLocalStorage: (state) => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                state.isAuthenticated = true;
+                
+            } else {
+                state.isAuthenticated = false;
+                state.user = null; // Ensure user is null after logout
+            }
+        },
+
     },
-    reducers: {},
     extraReducers: (builder) => {
         builder
-            // Fetch users
-            .addCase(fetchUsersThunk.pending, (state) => {
-                state.isLoading = true;
-                state.error = null;
-            })
-            .addCase(fetchUsersThunk.fulfilled, (state, action) => {
-                state.isLoading = false;
-                state.users = Array.isArray(action.payload.data) ? action.payload.data : [];  // Ensure it's an array
-                state.error = null;
-            })
-            .addCase(fetchUsersThunk.rejected, (state, action) => {
-                state.isLoading = false;
-                state.error = action.error.message; // Set the error message
-            })
-
-            // Add user
-            .addCase(addUserThunk.pending, (state) => {
-                state.isLoading = true;
-            })
-            .addCase(addUserThunk.fulfilled, (state, action) => {
-                // state.users.push(action.payload);
-                state.isLoading = false;
-                // if (Array.isArray(state.users)) {
-                //     state.users.push(action.payload); // Add the new user
-                // }
-            })
-            .addCase(addUserThunk.rejected, (state, action) => {
-                state.isLoading = false;
-                state.error = action.error.message; // Set the error message
-            })
-
-            // Edit user
-            .addCase(editUserThunk.pending, (state) => {
-                state.isLoading = true;
-            })
-            .addCase(editUserThunk.fulfilled, (state, action) => {
-                state.isLoading = false;
-                console.log("Edit user payload:", action.payload); // Log the payload
-                // if (Array.isArray(state.users)) {
-                //     const index = state.users.findIndex(user => user.id === action.payload.id);
-                //     if (index !== -1) {
-                //         state.users[index] = { ...state.users[index], ...action.payload }; // Update user
-                //     } else {
-                //         console.warn(`User with ID ${action.payload.id} not found for update.`);
-                //     }
-                // } else {
-                //     console.error("Expected state.users to be an array, but found:", state.users);
-                // }
-            })
-            .addCase(editUserThunk.rejected, (state, action) => {
-                state.isLoading = false;
-                state.error = action.error.message; // Set the error message
-            })
-
-            // Delete user
-            .addCase(deleteUserThunk.pending, (state) => {
-                state.isLoading = true;
-            })
-            .addCase(deleteUserThunk.fulfilled, (state, action) => {
-                state.isLoading = false;
-                // const index = state.users.findIndex(user => user.id === action.payload.id);
-                // if (index !== -1) {
-                //     state.users[index] = action.payload;
-                // }
-                // if (Array.isArray(state.users)) {
-                //     state.users = state.users.filter(user => user.id !== action.payload);
-                // }
-            })
-            .addCase(deleteUserThunk.rejected, (state, action) => {
-                state.isLoading = false;
-                state.error = action.error.message; // Set the error message
-            })
-
-            // Change user status
-            .addCase(changeUserStatusThunk.pending, (state) => {
+            .addCase(register.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(changeUserStatusThunk.fulfilled, (state, action) => {
+            .addCase(register.fulfilled, (state, action) => {
                 state.loading = false;
-                if (Array.isArray(state.users)) {
-                    const index = state.users.findIndex(user => user.id === action.payload);
-                    if (index !== -1) {
-                        state.users.splice(index, 1); // Remove user by index
-                    }
-                } else {
-                    console.error("Expected state.users to be an array, but found:", state.users);
-                }
+                
+                
             })
-            .addCase(changeUserStatusThunk.rejected, (state, action) => {
+            .addCase(register.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.error.message; // Set the error message
-            });
+                state.error = action.payload;
+            })
+            .addCase(login.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(login.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+            })
+            .addCase(login.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchUserProfile.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchUserProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+            })
+            .addCase(fetchUserProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(logout.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(logout.fulfilled, (state) => {
+                state.loading = false;
+                state.user = null;
+                state.isAuthenticated = false;
+            })
+            .addCase(logout.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchAllUsers.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchAllUsers.fulfilled, (state, action) => {
+                state.loading = false;
+                state.users = action.payload.users; 
+            })
+            .addCase(fetchAllUsers.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            }).addCase(updateUserSuperadmin.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(updateUserSuperadmin.fulfilled, (state, action) => {
+                state.loading = false;
+                const updatedUser = action.payload.data;
+                
+            })
+            .addCase(updateUserSuperadmin.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            // Delete user by superadmin
+            .addCase(deleteUserSuperadmin.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteUserSuperadmin.fulfilled, (state, action) => {
+                state.loading = false;
+                const deletedUser = action.payload.data;
+                
+            })
+            .addCase(deleteUserSuperadmin.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            ;
     },
 });
 
-// Export actions and reducer
-export const { clearError } = userSlice.actions;
+export const { setUser, clearError, clearUser, setUserFromLocalStorage } = userSlice.actions;
+
 export default userSlice.reducer;

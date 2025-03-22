@@ -1,28 +1,27 @@
 import { useState } from "react";
-import {
-  Card,
-  Input,
-  Button,
-  Typography,
-} from "@material-tailwind/react";
+import { Card, Input, Button, Typography } from "@material-tailwind/react";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useDispatch, useSelector } from "react-redux";
-import { login } from "@/Redux/slices/authslices";
-import { loginDummyJson } from "@/data/dummyLogin";
+
+// Redux imports
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '@/Redux/slices/User.Slice'; // Import the login action from the user slice
 
 export function SignIn() {
-  const [email, setEmail] = useState(loginDummyJson?.user?.email);
-  const [password, setPassword] = useState(loginDummyJson?.user?.password);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Redux state and dispatch
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated } = useSelector((state) => state.user); // Access loading, error, and isAuthenticated states
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Basic validation
     if (!email) {
       toast.error("Email is required.");
       return;
@@ -34,9 +33,17 @@ export function SignIn() {
     }
 
     try {
-      await dispatch(login({ email, password })).unwrap();
-      toast.success("Successfully signed in!");
-      navigate("/dashboard/home");
+      // Dispatch login action and wait for response
+      const resultAction = await dispatch(login({ email, password }));
+
+      // Check if login was successful
+      if (login.fulfilled.match(resultAction)) {
+        console.log(login.fulfilled.match(resultAction))
+        toast.success("Successfully signed in!");
+        navigate("/dashboard/home"); // Navigate to the dashboard after successful login
+      } else {
+        toast.error(resultAction.payload || "Login failed.");
+      }
     } catch (error) {
       toast.error(error.message || "Login failed.");
     }
@@ -101,7 +108,7 @@ export function SignIn() {
           <Button className="mt-3" type="submit" fullWidth disabled={loading}>
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
-          {error && <Typography className="text-red-500">{error}</Typography>}
+          {error && <Typography className="text-red-500">{error}</Typography>} {/* Display the error here */}
         </form>
       </div>
       <div className="w-2/5 h-full hidden lg:block">

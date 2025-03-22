@@ -8,13 +8,13 @@ import {
   Footer,
 } from "@/widgets/layout";
 import routes from "@/routes";
-import { useSelector, useDispatch } from "react-redux";
-import { setOpenConfigurator } from "@/Redux/slices/materialTailwindSlice"; 
+
+
 import { useState } from "react";
 
 export function Dashboard() {
-  const dispatch = useDispatch();
-  const { sidenavType } = useSelector((state) => state.materialTailwind);
+
+
 
   // State to manage iframe visibility
   const [iframeVisible, setIframeVisible] = useState(true);
@@ -32,7 +32,7 @@ export function Dashboard() {
         <Sidenav
           routes={routes}
           brandImg={
-            sidenavType === "dark" ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"
+            "/img/logo-ct-dark.png"
           }
         />
       )}

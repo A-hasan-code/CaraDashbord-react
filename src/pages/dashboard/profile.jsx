@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardBody,
@@ -14,20 +14,45 @@ import {
   EyeIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/solid";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserProfile, updateProfile } from "@/Redux/slices/User.Slice";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export function Profile() {
+  const dispatch = useDispatch();
+  const { user, error, loading } = useSelector((state) => state.user);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "Richard Davisa",
-    email: "richard.davisa@mail.com",
-    password: "Dummy@123", // Dummy password
-    confirmPassword: "Dummy@123", // Dummy confirm password
-    location: "New York, USA",
-    avatar: "/img/bruce-mars.jpeg",
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    location_id: "",
+    image: "",
   });
+
+  useEffect(() => {
+    if (!user) {
+      dispatch(fetchUserProfile());
+    }
+  }, [dispatch, user]);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        password: "",
+        confirmPassword: "",
+        location_id: user.location_id,
+        image: user.image ? `http://localhost:5000/${user.image}` : "/img/bruce-mars.jpeg",
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,33 +60,60 @@ export function Profile() {
       ...prevData,
       [name]: value,
     }));
-    setError(""); // Clear error when user types
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prevData) => ({
-          ...prevData,
-          avatar: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+      setFormData((prevData) => ({
+        ...prevData,
+        image: URL.createObjectURL(file),
+      }));
     }
   };
 
-  const handleSave = () => {
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+  const handleSave = async () => {
+    if (!formData.password || !formData.confirmPassword) {
+      toast.error("Please fill in both password fields");
       return;
     }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("name", formData.name);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("password", formData.password);
+    formDataToSend.append("confirmPassword", formData.confirmPassword);
+    formDataToSend.append("location_id", formData.location_id);
+    if (formData.image && formData.image instanceof File) {
+      formDataToSend.append("image", formData.image);
+    }
+
+    try {
+      const response = await axios.put("http://localhost:5000/api/v1/profile", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (response.data.success) {
+        toast.success("Profile updated successfully!");
+        dispatch(fetchUserProfile());
+      }
+    } catch (err) {
+      toast.error("Error updating profile: " + (err.response?.data?.message || err.message));
+    }
+
     setIsEditing(false);
   };
 
   const handleEdit = () => {
-    setIsEditing(true);
+    setIsEditing((prevState) => !prevState); // Toggle edit mode
   };
 
   const togglePasswordVisibility = (type) => {
@@ -74,31 +126,24 @@ export function Profile() {
 
   return (
     <>
-      {/* Background Section */}
       <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover bg-center">
         <div className="absolute inset-0 h-full w-full bg-gradient-to-t from-black/75 to-transparent" />
       </div>
 
-      {/* Profile Card */}
       <Card className="mx-3 -mt-16 mb-10 lg:mx-4 border border-blue-gray-100 shadow-xl">
         <CardBody className="p-6 pb-10">
-          {/* Avatar Section + Name */}
           <div className="flex flex-col items-center">
-            <div className="mb-8 flex justify-center items-center">
+            <div className="mb-2 flex justify-center items-center">
               <div className="relative flex flex-col items-center">
                 <Avatar
-                  src={formData.avatar}
+                  src={formData?.image}
                   alt="User Avatar"
-                  size="xl"
-                  variant="rounded"
-                  className="rounded-full shadow-lg shadow-blue-gray-500/40 border-4 border-white"
+                  className="h-[150px] w-[150px] shadow-lg shadow-blue-gray-500/40 border-2 border-white"
                 />
                 {isEditing && (
                   <div className="absolute bottom-1 right-1 bg-blue-500 p-1 rounded-full cursor-pointer hover:bg-blue-600 transition-all duration-200">
                     <button
-                      onClick={() =>
-                        document.getElementById("avatar-file-input").click()
-                      }
+                      onClick={() => document.getElementById("avatar-file-input").click()}
                       className="flex items-center justify-center w-6 h-6 bg-transparent border-0 cursor-pointer"
                     >
                       <PencilIcon className="text-white w-4 h-4" />
@@ -113,61 +158,44 @@ export function Profile() {
                   </div>
                 )}
               </div>
-
-              {/* Name and Role */}
-              <div className="mt-4 text-center">
-                <Typography
-                  variant="h5"
-                  color="blue-gray"
-                  className="mb-1 font-semibold text-2xl"
-                >
-                  {formData.fullName}
-                </Typography>
-                <Typography
-                  variant="small"
-                  className="font-normal text-blue-gray-600 text-lg"
-                >
-                  CEO / Co-Founder
-                </Typography>
-              </div>
             </div>
 
-            {/* Edit Button */}
+            <div className="mt-2 mb-3 text-center">
+              <Typography variant="h5" color="blue-gray" className="mb-1 font-semibold text-2xl">
+                {formData.name}
+              </Typography>
+              <Typography variant="small" className="font-normal text-blue-gray-600 text-lg">
+                {user?.role}
+              </Typography>
+            </div>
+
             <div className="mb-6">
-              <Tooltip content="Edit Profile">
+              <Tooltip content={isEditing ? "Cancel Edit" : "Edit Profile"}>
                 <Button
                   variant="outlined"
                   onClick={handleEdit}
                   className="group flex items-center gap-2 px-5 py-2 text-blue-600 hover:text-white hover:bg-blue-600 border-2 border-blue-600 rounded-full transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
                   <PencilIcon className="h-5 w-5" />
-                  Edit
+                  {isEditing ? "Cancel" : "Edit"}
                 </Button>
               </Tooltip>
             </div>
           </div>
 
-          {/* Edit Profile Info Section */}
           <div className="mt-4">
-            <Typography
-              variant="h6"
-              color="blue-gray"
-              className="mb-3 text-xl font-semibold"
-            >
+            <Typography variant="h6" color="blue-gray" className="mb-3 text-xl font-semibold">
               Basic Information
             </Typography>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Full Name */}
               <Input
                 label="Full Name"
-                name="fullName"
-                value={formData.fullName}
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 disabled={!isEditing}
               />
-
-              {/* Email */}
               <Input
                 label="Email"
                 name="email"
@@ -177,9 +205,7 @@ export function Profile() {
               />
             </div>
 
-            {/* Password + Confirm Password */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* Password */}
               <div className="relative">
                 <Input
                   label="Password"
@@ -198,7 +224,6 @@ export function Profile() {
                 </button>
               </div>
 
-              {/* Confirm Password */}
               <div className="relative">
                 <Input
                   label="Confirm Password"
@@ -218,26 +243,23 @@ export function Profile() {
               </div>
             </div>
 
-            {/* Location */}
             <div className="mt-6">
               <Input
-                label="Location"
-                name="location"
-                value={formData.location}
+                label="Location ID"
+                name="location_id"
+                value={formData.location_id}
                 onChange={handleChange}
                 disabled={!isEditing}
               />
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <Typography color="red" className="mt-2 text-center">
               {error}
             </Typography>
           )}
 
-          {/* Save Button - Centered */}
           {isEditing && (
             <div className="mt-8 flex justify-center">
               <Button

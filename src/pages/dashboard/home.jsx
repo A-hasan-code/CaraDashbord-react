@@ -17,6 +17,10 @@ import { BiDotsVerticalRounded } from "react-icons/bi";
 import SelectComponent from "@/constant/Select/Select";
 import RangeCalender from "@/constant/range calender/RangeCalender";
 import CachedIcon from '@mui/icons-material/Cached';
+import Axios from '@/Api/Axios'
+import { ToastContainer, toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
+import {getImageSettings} from '@/Redux/slices/secretIdSlice'
 // Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
 
 //cropper
@@ -202,7 +206,7 @@ const options = [
 
 export function Home() {
 
-  const [coverImage, setCoverImage] = useState(null);
+
   const [filterTags, setFilterTags] = useState([]); // Filters for tags
   const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
@@ -223,12 +227,16 @@ export function Home() {
   const [rotation, setRotation] = useState(0); // Rotation angle
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropping, setIsCropping] = useState(false);
-  const [imgUrl, setImgUrl] = useState(null);
+const [logo, setLogo] = useState(null); // Store the uploaded file
+  const [imagePreview, setImagePreview] = useState(null); // Store the preview URL
+  const [coverImage, setCoverImage] = useState(null); // The uploaded image URL (to display)
+  const [loading, setLoading] = useState(false); // To manage loading state
+  const [error, setError] = useState(null); // For error handling
   const [activeProjectId, setActiveProjectId] = useState(null); // Track active project
   const [croppedImages, setCroppedImages] = useState({});
   //cropper
-
-  const [loading, setLoading] = useState(false);
+ const { clientId, clientSecret, isEditing, cover: imagelogo } = useSelector((state) => state.clientIdsSet);
+const dispatch=useDispatch()
 
   const handleMultiSelectChange = (selected) => {
     setSelectedOptions(selected);
@@ -345,16 +353,7 @@ export function Home() {
   const projectsPerPage = 8;
   const settingsRef = useRef(null); // Ref for settings dropdown
   const dateFilterRef = useRef(null);
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
   const handleTagSearch = () => {
     if (selectedOptions.length) {
       setIsFiltered(true);
@@ -454,15 +453,60 @@ export function Home() {
         return 'grid-cols-2';
     }
   };
+
+ const handleCover = async (e) => {
+  const file = e.target.files[0];
+  setLogo(file);
+  setImagePreview(URL.createObjectURL(file)); // Show image preview
+
+  // Create FormData to send to the API
+  const formData = new FormData();
+  formData.append('image', file); // Append the image file
+  formData.append('key', 'cover'); // Add the key as 'cover'
+
+  try {
+    setLoading(true);
+    console.log("Sending file to API:", formData); // Check FormData content
+
+    const response = await Axios.post('/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    
+    if (response.data && response.data.setting) {
+      toast.success('Cover image uploaded successfully!');
+      dispatch(getImageSettings())
+      setCoverImage(response.data.setting.imageUrl); // Assuming API returns the image URL
+    } else {
+      throw new Error("Unexpected response structure");
+    }
+  } catch (error) {
+    dispatch(getImageSettings())
+    console.error("Upload failed:", error); // Log any errors for better debugging
+    setError('Failed to upload image: ' + error.message);
+    toast.error(error.message || 'Failed to upload cover image');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // Trigger file input click
+  const triggerFileInput = () => {
+    document.getElementById('file-upload').click();
+  };
   return (
     <div className="mt-12   relative">
       {/* Cover Image Section */}
 
-      <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6 h-full min-h-[400px] flex flex-col justify-center items-center">
+    <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6 h-full min-h-[400px] flex flex-col justify-center items-center">
         {/* Cover Image Section */}
         <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
           <img
-            src={coverImage || 'default-cover-image.jpg'} // Replace with your default image path
+            src={`http://localhost:5000${imagelogo}` || imagePreview } 
             alt="Cover"
             className="object-cover w-full h-full"
           />
@@ -480,7 +524,7 @@ export function Home() {
           id="file-upload"
           type="file"
           accept="image/*"
-          onChange={handleImageChange}
+          onChange={handleCover}
           className="hidden"
         />
 

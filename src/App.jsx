@@ -4,24 +4,27 @@ import { Dashboard, Auth } from "@/layouts";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUser } from "@/Redux/slices/authslices";
+import { fetchUserProfile, setUserFromLocalStorage } from "@/Redux/slices/User.Slice";
+import { Home, Profile, Tables, UsersTable, Settings } from "@/pages/dashboard";
 import ProtectedRoute from "@/ProtectedRoute";
 import "@/app.css";
 import Protect from "./Protect";
+
 function App() {
   const dispatch = useDispatch();
-  const { isAuthenticated, user, loading, error } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, error } = useSelector((state) => state.user);
+
   useEffect(() => {
+    const token = localStorage.getItem('token');
 
-    const token = localStorage.getItem('access_token');
-    if (token && !isAuthenticated && !user) {
-      dispatch(fetchUser());
+    if (!token) {
+      dispatch(setUserFromLocalStorage());
+    } else {
+      if (!user) {
+        dispatch(fetchUserProfile());
+      }
     }
-  }, [dispatch, isAuthenticated]);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  }, [dispatch, user]);
 
   if (error) {
     console.error("Error fetching user:", error);
@@ -29,11 +32,23 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/dashboard/*" element={<Dashboard />} />
+      
+      {/* Protected Dashboard Route */}
+      <Route path="/dashboard/*" element={ 
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+   
+      {/* Auth Routes */}
       <Route path="/auth/*" element={<Auth />} />
-      <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
+
+      {/* Password Reset Routes */}
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Catch-all for invalid routes */}
+      <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
     </Routes>
   );
 }
