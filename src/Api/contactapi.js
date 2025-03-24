@@ -13,21 +13,46 @@ export const getContactsByLocation = async () => {
 };
 export const getCustomFields = async () => {
     try {
-        const response = await Axios.get('/displaycfields');  
+        const response = await Axios.get('/displaycfields');
         console.log("Custom Fields: ", response.data);
-        return response.data;  
+        return response.data;
     } catch (error) {
         console.error('Error fetching custom fields:', error);
-        
+
         throw new Error('There was an issue fetching the custom fields.');
     }
 };
 export const updateDisplaySetting = async (displaySettingData) => {
     try {
-        const response = await Axios.post('/displaysetting', displaySettingData); 
-        return response.data;  
+        const response = await Axios.post('/displaysetting', displaySettingData);
+        return response.data;
     } catch (error) {
         console.error('Error updating display settings:', error);
-        throw error;  
+        throw error;
+    }
+};
+export const getgallery = async (page = 1, limit = 10) => {
+    try {
+        const response = await Axios.get('/galleryview', {
+            params: {
+                page,
+                limit, tags
+            }
+        });
+        console.log("Fetched contacts:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching contacts:', error);
+        throw error;
+    }
+};
+
+export const getSearchSuggestions = async (displaySettingData) => {
+    try {
+        const response = await Axios.post('/displaysetting', displaySettingData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating display settings:', error);
+        throw error;
     }
 };

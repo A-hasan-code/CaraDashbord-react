@@ -20,160 +20,15 @@ import CachedIcon from '@mui/icons-material/Cached';
 import Axios from '@/Api/Axios'
 import { ToastContainer, toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
-import {getImageSettings} from '@/Redux/slices/secretIdSlice'
+import {getGallery} from '@/Redux/slices/Gallery.slice'
+
 // Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
 
 //cropper
 import Cropper from "react-easy-crop";
 //cropper
 
-const projectData = [
-  {
-    "id": 1,
-    "name": "John Doe",
-    "projectDate": "2025-03-24",
-    "startTime": "10:00 AM",
-    "finishTime": "04:00 PM",
-    "location": "New York City",
-    "vendor": "ABC Weddings",
-    "imagePath": "https://storage.googleapis.com/msgsndr/e1rwhC6H3sxPteIfdj8g/media/67aff0803e3c90c0608b0f85.png",
-    "customFields": [
 
-      { "label": "Custom Field 3", "value": "Custom Value 3", },
-      { "label": "Custom Field 3", "value": "Custom Value 3", },
-      { "label": "Custom Field 3", "value": "Custom Value 3", },
-      { "label": "Custom Field 3", "value": "Custom Value 3", },
-
-      { "label": "Custom Field 1", "value": "Custom Value 4", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "456", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      , { "label": "Custom Field 1", "value": "Custom Value 14", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "5678", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" }, { "label": "Custom Field 1", "value": "Custom Value 14", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "5678", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" }, { "label": "Custom Field 1", "value": "Custom Value 14", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "5678", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" }, { "label": "Custom Field 1", "value": "Custom Value 14", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "5678", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },],
-    "tags": ["wedding", "event", "art"],
-    "age": 25
-  },
-  {
-    "id": 2,
-    "name": "Jane Smith",
-    "projectDate": "2025-03-24",
-    "startTime": "11:00 AM",
-    "finishTime": "05:00 PM",
-    "location": "Los Angeles",
-    "vendor": "XYZ Weddings",
-    "imagePath": "https://storage.googleapis.com/msgsndr/vcLxBfw01Nmv2VnlhtND/media/67d1a603c9434cd32b34fa7e.jpeg",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "Custom Value 4", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "456", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 5", "image": "" }
-    ],
-    "tags": ["birthday", "celebration", "art"],
-    "age": 28
-  },
-  {
-    "id": 3,
-    "name": "Michael Brown",
-    "projectDate": "2025-05-15",
-    "startTime": "09:00 AM",
-    "finishTime": "03:00 PM",
-    "location": "Chicago",
-    "vendor": "LMN Events",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "Custom Value 6", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "789", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 7", "image": "" }
-    ],
-    "tags": ["corporate", "event", "business"],
-    "age": 30
-  },
-  {
-    "id": 4,
-    "name": "Sarah Miller",
-    "projectDate": "2025-06-21",
-    "startTime": "02:00 PM",
-    "finishTime": "06:00 PM",
-    "location": "San Francisco",
-    "vendor": "GHI Weddings",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "Custom Value 8", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "987", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 9", "image": "" }
-    ],
-    "tags": ["wedding", "art"],
-    "age": 26
-  },
-  {
-    "id": 5,
-    "name": "David Wilson",
-    "projectDate": "2025-07-05",
-    "startTime": "08:00 AM",
-    "finishTime": "04:00 PM",
-    "location": "Miami",
-    "vendor": "JKL Weddings",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "Custom Value 10", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "1234", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 11", "image": "" }
-    ],
-    "tags": ["party", "event", "celebration"],
-    "age": 32
-  },
-  {
-    "id": 6,
-    "name": "Olivia Taylor",
-    "projectDate": "2025-08-11",
-    "startTime": "01:00 PM",
-    "finishTime": "07:00 PM",
-    "location": "Austin",
-    "vendor": "LMN Events",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "Custom Value 12", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "4567", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 13", "image": "" }
-    ],
-    "tags": ["fashion", "event", "art"],
-    "age": 29
-  },
-  {
-    "id": 7,
-    "name": "Anna Lee",
-    "projectDate": "2025-09-05",
-    "startTime": "11:00 AM",
-    "finishTime": "04:00 PM",
-    "location": "Seattle",
-    "vendor": "XYZ Events",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "Custom Value 14", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "5678", "image": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 15", "image": "" }
-    ],
-    "tags": ["event", "conference"],
-    "age": 31
-  },
-  {
-    "id": 8,
-    "name": "James White",
-    "projectDate": "2025-10-12",
-    "startTime": "01:00 PM",
-    "finishTime": "05:00 PM",
-    "location": "Dallas",
-    "vendor": "LMN Events",
-    "imagePath": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png",
-    "customFields": [
-      { "label": "Custom Field 1", "value": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 2", "value": "https://www.fiestroevents.com/uploads/24/08/66b21e981eced0608241722949272.png" },
-      { "label": "Custom Field 3", "value": "Custom Value 17", }
-    ],
-    "tags": ["product launch", "conference"],
-    "age": 27
-  }
-];
 
 const customStyles = {
   control: (provided, state) => ({
@@ -189,151 +44,91 @@ const customStyles = {
     zIndex: 9999,
   }),
 };
-const options = [
-  { value: 'wedding', label: 'Wedding' },
-  { value: 'event', label: 'Event' },
-  { value: 'party', label: 'Party' },
-  { value: 'celebration', label: 'Celebration' },
-  { value: 'corporate', label: 'Corporate' },
-  { value: 'birthday', label: 'Birthday' },
-  { value: 'conference', label: 'Conference' },
-  { value: 'fashion', label: 'Fashion' },
-  { value: 'business', label: 'Business' },
-  { value: 'product', label: 'Product' },
-  { value: 'product launch', label: 'Product Launch' },
-  { value: 'art', label: 'Art' },
-];
+
 
 export function Home() {
+const dispatch = useDispatch();
+  const { gallery, page, limit, totalContacts  } = useSelector((state) => state.gallery);
+  console.log('gallery', gallery);
+  
 
-
-  const [filterTags, setFilterTags] = useState([]); // Filters for tags
+  const [filterTags, setFilterTags] = useState([]);  // Filters for tags
   const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [cardSize, setCardSize] = useState("small"); // Default card size
-  const [dateFormat, setDateFormat] = useState("MM/DD/YYYY"); // Default date format
-  const [dateBold, setDateBold] = useState(false); // Default date not bold
-  const [showSettings, setShowSettings] = useState(false); // State for toggling settings dropdown
-  const [isFiltered, setIsFiltered] = useState(false); // Tracks if filters are applied
+  const [currentPage, setCurrentPage] = useState(1)
+  const [cardSize, setCardSize] = useState("small");
+const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFiltered] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
 
-  //cropper
-  const [imageSrc, setImageSrc] = useState(null); // Image source
-  const [crop, setCrop] = useState({ x: 0, y: 0 }); // Crop position
-  const [zoom, setZoom] = useState(1); // Zoom level
-  const [rotation, setRotation] = useState(0); // Rotation angle
+  // State for image cropping
+  const [imageSrc, setImageSrc] = useState(null);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [rotation, setRotation] = useState(0);
   const [isCropping, setIsCropping] = useState(false);
-const [logo, setLogo] = useState(null); // Store the uploaded file
-  const [imagePreview, setImagePreview] = useState(null); // Store the preview URL
-  const [coverImage, setCoverImage] = useState(null); // The uploaded image URL (to display)
-  const [loading, setLoading] = useState(false); // To manage loading state
-  const [error, setError] = useState(null); // For error handling
-  const [activeProjectId, setActiveProjectId] = useState(null); // Track active project
-  const [croppedImages, setCroppedImages] = useState({});
-  //cropper
- const { clientId, clientSecret, isEditing, cover: imagelogo } = useSelector((state) => state.clientIdsSet);
-const dispatch=useDispatch()
+
+  // State for uploading images
+  const [logo, setLogo] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const options =[];
+  const [showSettings, setShowSettings] = useState(false);
+  const projectData  = [];
+    const projectsPerPage = 8;
+
+  const { clientId, clientSecret, isEditing, cover: imagelogo } = useSelector((state) => state.clientIdsSet);
 
   const handleMultiSelectChange = (selected) => {
     setSelectedOptions(selected);
   };
-  // Handle the crop button click to toggle cropping for a project
+
   const handleCropClick = (project) => {
     setImageSrc(project?.imagePath);
-    setActiveProjectId(project?.id);
     setIsCropping(true);
   };
-  // Handle cancel button click for crop mode
+
   const handleCancelCrop = () => {
     setIsCropping(false);
     setImageSrc(null);
-    setActiveProjectId(null);
   };
-  // Handle crop completion
+
   const onCropComplete = (_, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
-  // Convert Base64 to URL
-  const convertBase64ToUrl = (base64String) => {
-    const byteString = atob(base64String.split(",")[1]);
-    const mimeString = base64String.split(",")[0].split(":")[1].split(";")[0];
-
-    const arrayBuffer = new ArrayBuffer(byteString.length);
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    for (let i = 0; i < byteString.length; i++) {
-      uint8Array[i] = byteString.charCodeAt(i);
-    }
-
-    const blob = new Blob([arrayBuffer], { type: mimeString });
-    return URL.createObjectURL(blob);
-  };
-
-
-  // Save cropped image
   const handleSaveCrop = async () => {
     try {
-      const croppedImageFinal = await getCroppedImg(
-        imageSrc,
-        croppedAreaPixels,
-        rotation
-      );
-      setCroppedImages((prev) => ({
-        ...prev,
-        [activeProjectId]: croppedImageFinal, // Only update the active project
-      }));
+      const croppedImageFinal = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      setCoverImage(croppedImageFinal);  // Store cropped image
       setIsCropping(false);
       setImageSrc(null);
-      setActiveProjectId(null);
     } catch (e) {
       console.error("Error cropping image:", e);
     }
   };
 
-  // Utility function to crop image
-  const getCroppedImg = async (imageSrc, pixelCrop, rotation = 0) => {
+  const getCroppedImg = (imageSrc, pixelCrop, rotation = 0) => {
     const image = new Image();
-    image.crossOrigin = "Anonymous";
     image.src = imageSrc;
 
     return new Promise((resolve, reject) => {
       image.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-
         const maxSize = Math.max(image.width, image.height);
-        const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
-
-        canvas.width = safeArea;
-        canvas.height = safeArea;
-
-        ctx.translate(safeArea / 2, safeArea / 2);
+        canvas.width = maxSize;
+        canvas.height = maxSize;
+        ctx.translate(maxSize / 2, maxSize / 2);
         ctx.rotate((rotation * Math.PI) / 180);
-        ctx.translate(-safeArea / 2, -safeArea / 2);
-
-        ctx.drawImage(
-          image,
-          safeArea / 2 - image.width / 2,
-          safeArea / 2 - image.height / 2
-        );
-
-        const data = ctx.getImageData(0, 0, safeArea, safeArea);
-
+        ctx.translate(-maxSize / 2, -maxSize / 2);
+        ctx.drawImage(image, 0, 0);
+        const data = ctx.getImageData(0, 0, maxSize, maxSize);
         canvas.width = pixelCrop.width;
         canvas.height = pixelCrop.height;
-
-        ctx.putImageData(
-          data,
-          Math.round(0 - safeArea / 2 + image.width / 2 - pixelCrop.x),
-          Math.round(0 - safeArea / 2 + image.height / 2 - pixelCrop.y)
-        );
-
-        // Create a blob instead of Base64
+        ctx.putImageData(data, Math.round(0 - pixelCrop.x), Math.round(0 - pixelCrop.y));
         canvas.toBlob((blob) => {
           if (blob) {
             const croppedImageUrl = URL.createObjectURL(blob);
@@ -341,7 +136,7 @@ const dispatch=useDispatch()
           } else {
             reject(new Error("Canvas is empty"));
           }
-        }, "image/jpeg");
+        });
       };
 
       image.onerror = (error) => {
@@ -350,98 +145,34 @@ const dispatch=useDispatch()
     });
   };
 
-  const projectsPerPage = 8;
-  const settingsRef = useRef(null); // Ref for settings dropdown
-  const dateFilterRef = useRef(null);
-
+  // Handle the filter for tags and dates
   const handleTagSearch = () => {
-    if (selectedOptions.length) {
-      setIsFiltered(true);
-    } else {
-      setIsFiltered(false);
-    }
-  };
-  const handleCloseDateFilter = () => {
-    setShowDateFilter(false);
-  };
-  const handleClearFilters = () => {
-    setFilterTags([]);
-    setDateRange([
-      { startDate: new Date(), endDate: new Date(), key: "selection" },
-    ]);
-    setIsFiltered(false); // Reset filtered state
-  };
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Agar settings dropdown ka click outside ho, toh settings band karo
-      if (
-        settingsRef.current &&
-        !settingsRef.current.contains(event.target)
-      ) {
-        setShowSettings(false);
-      }
-
-      // Agar date filter dropdown ka click outside ho, toh date filter band karo
-      if (
-        dateFilterRef.current &&
-        !dateFilterRef.current.contains(event.target)
-      ) {
-        setShowDateFilter(false);
-      }
-    };
-
-    // Event listener add karo
-    document.addEventListener("mousedown", handleClickOutside);
-
-    // Cleanup function taake memory leak na ho
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showSettings, showDateFilter]); // Dependency array add ki takay effect update hota rahe
-
-  // Function to format dates based on selected format
-  const formatDate = (date) => {
-    const dayOptions = { weekday: "long", day: "2-digit", month: "long", year: "numeric" };
-    const dddOptions = { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" };
-    const monthDayYearOptions = { weekday: "long", month: "2-digit", day: "2-digit", year: "numeric" };
-
-    switch (dateFormat) {
-      case "Day, DD Month YYYY":
-        return new Date(date).toLocaleDateString("en-GB", dayOptions);
-      case "ddd/DD/MM/YYYY":
-        return new Date(date).toLocaleDateString("en-GB", dddOptions);
-      case "Day, MM/DD/YYYY":
-        return new Date(date).toLocaleDateString("en-US", monthDayYearOptions);
-      default:
-        return new Date(date).toLocaleDateString("en-US", dayOptions);
-    }
+    setIsFiltered(selectedOptions.length > 0);
   };
 
-  // Function to filter the projects based on tags and date range
   const filterProjects = () => {
-    return projectData.filter((project) => {
+    return gallery.filter((project) => {
       if (!isFiltered) return true;
-
-      const tagMatch = selectedOptions.every((option) => project.tags.includes(option?.value))
-
+      const tagMatch = selectedOptions.every((option) => project.tags.includes(option?.value));
       const projectDate = new Date(project.projectDate);
-      const dateMatch =
-        projectDate >= new Date(dateRange[0].startDate) &&
-        projectDate <= new Date(dateRange[0].endDate);
+      const dateMatch = projectDate >= new Date(dateRange[0].startDate) && projectDate <= new Date(dateRange[0].endDate);
       return tagMatch || dateMatch;
     });
   };
 
   const filteredProjects = filterProjects();
-  const indexOfLastProject = currentPage * projectsPerPage;
-  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
-  const currentProjects = filteredProjects.slice(
-    indexOfFirstProject,
-    indexOfLastProject
-  );
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const getGridColumns = () => {
+  const handleClearFilters = () => {
+    setFilterTags([]);
+    setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+    setIsFiltered(false);
+  };
+
+ const paginate = (pageNumber) => {
+    dispatch(setPage(pageNumber)); // Dispatch action to update page
+    dispatch(getGallery({ page: pageNumber, limit })); // Fetch new gallery data
+  };
+    const getGridColumns = () => {
     switch (cardSize) {
       case 'small':
         return 'grid-cols-5';
@@ -454,50 +185,42 @@ const dispatch=useDispatch()
     }
   };
 
- const handleCover = async (e) => {
-  const file = e.target.files[0];
-  setLogo(file);
-  setImagePreview(URL.createObjectURL(file)); // Show image preview
+  const handleCover = async (e) => {
+    const file = e.target.files[0];
+    setLogo(file);
+    setImagePreview(URL.createObjectURL(file));
 
-  // Create FormData to send to the API
-  const formData = new FormData();
-  formData.append('image', file); // Append the image file
-  formData.append('key', 'cover'); // Add the key as 'cover'
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("key", "cover");
 
-  try {
-    setLoading(true);
-    console.log("Sending file to API:", formData); // Check FormData content
+    try {
+      setLoading(true);
+      const response = await Axios.post("/upload-image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    const response = await Axios.post('/upload-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
-
-    
-    if (response.data && response.data.setting) {
-      toast.success('Cover image uploaded successfully!');
-      dispatch(getImageSettings())
-      setCoverImage(response.data.setting.imageUrl); // Assuming API returns the image URL
-    } else {
-      throw new Error("Unexpected response structure");
+      if (response.data && response.data.setting) {
+        toast.success("Cover image uploaded successfully!");
+        setCoverImage(response.data.setting.imageUrl);
+      } else {
+        throw new Error("Unexpected response structure");
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload cover image");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    dispatch(getImageSettings())
-    console.error("Upload failed:", error); // Log any errors for better debugging
-    setError('Failed to upload image: ' + error.message);
-    toast.error(error.message || 'Failed to upload cover image');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // Trigger file input click
-  const triggerFileInput = () => {
-    document.getElementById('file-upload').click();
   };
+
+  useEffect(() => {
+    dispatch(getGallery({ page: 1, limit: 10 }));
+  }, [dispatch,page, limit]);
+
   return (
     <div className="mt-12   relative">
       {/* Cover Image Section */}
@@ -683,8 +406,9 @@ const dispatch=useDispatch()
       </div>
 
       <div className={`grid gap-2 mt-5 ${getGridColumns()}`}>
-        {currentProjects.map((project) => {
-          const croppedImage = croppedImages[project.id] || project.imagePath;
+        {gallery.map((project) => {
+          // const croppedImage = croppedImages[project.id] || project.imagePath;
+          const croppedImage = project.cardCoverImage || '';
           return (
             <Card
               key={project.id}
@@ -700,13 +424,13 @@ const dispatch=useDispatch()
                 </div>
                 <div className="w-full h-90 overflow-hidden">
                   <img
-                    src={croppedImage}
+                    src={croppedImage || 'https://cdn.vectorstock.com/i/500p/54/17/person-gray-photo-placeholder-man-vector-24005417.jpg'}
                     alt={project.name}
                     className="object-cover w-full h-full aspect-[3/4]"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
                     <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
-                      {project.name}
+                      {project.name || 'No Name'}
                     </Typography>
                   </div>
                 </div>
@@ -749,30 +473,28 @@ const dispatch=useDispatch()
               <CardBody className="p-6 flex flex-col justify-between">
                 <div className="flex flex-col flex-1">
                   <Typography variant="h1" className="flex justify-center text-lg font-semibold text-gray-700 mb-2">
-                    {formatDate(project.projectDate)}
+                    {project.standardCustomFields.projectDate || 'DD/MM/YYY'}
                   </Typography>
                   <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
-                    <span>{project.startTime}</span>
+                    <span>{project.standardCustomFields.startTime || '00.00'}</span>
                     <span className="mx-2 text-xl">→</span>
-                    <span>{project.finishTime}</span>
+                    <span>{project.standardCustomFields.finishTime || '00.00'}</span>
                   </div>
 
                   {/* Custom Fields */}
                   <div className="flex flex-col  mt-1 overflow-y-auto max-h-68 custom-scrollbar">
-                    {project.customFields
-                      .filter((field) => !field.image) // Only fields with no image
-                      .map((field, index) => (
+                    {project?.customCustomFields.map((field, index) => (
                         <div key={index} className="mb-2 flex items-center justify-center space-x-2 text-sm">
                           <div variant="body2" className="text-gray-700 font-semibold text-sm " >
-                            {field.value.includes('http') ? 'CustomField:' : field.label + ':'}
+                            {field?.value?.includes('http') ? 'CustomField:' : field.label + ':'}
                           </div>
                           <div variant="body2" className="text-gray-600 break-words   text-" >
-                            {field.value.includes('http') ? (
+                            {field?.value?.includes('http') ? (
                               <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">
                                 {field.label}
                               </a>
                             ) : (
-                              field.value
+                              field.value || 'null'
                             )}
                           </div>
                         </div>
@@ -781,9 +503,9 @@ const dispatch=useDispatch()
 
                   {/* Custom Fields with Images */}
                   <div className="flex flex-wrap mt-1 relative">
-                    {project.customFields
-                      .filter((field) => field.image) // Only fields with an image
-                      .slice(0, 10) // Limit to 10 images
+                    {project.relatedImages
+                      .filter((field) => field.image) 
+                      .slice(0, 10)
                       .map((field, index) => (
                         <div key={index} className="flex items-center mb-4 space-x-4 group relative">
                           <img
