@@ -31,21 +31,22 @@ export const updateDisplaySetting = async (displaySettingData) => {
         throw error;
     }
 };
-export const getgallery = async (page = 1, limit = 10) => {
-    try {
-        const response = await Axios.get('/galleryview', {
-            params: {
-                page,
-                limit, tags
-            }
-        });
-        console.log("Fetched contacts:", response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching contacts:', error);
-        throw error;
-    }
-};
+// export const getgallery = async (page = 1, limit = 10) => {
+//     try {
+//         const response = await Axios.get('/galleryview', {
+//             params: {
+//                 page,
+//                 limit, 
+//                 tags
+//             }
+//         });
+//         console.log("Fetched contacts:", response.data);
+//         return response.data;
+//     } catch (error) {
+//         console.error('Error fetching contacts:', error);
+//         throw error;
+//     }
+// };
 
 export const getSearchSuggestions = async (searchQuery) => {
     try {

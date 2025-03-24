@@ -20,7 +20,6 @@ export const getImageSettings = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await getimage();
-            console.log(response)
             return response; // Return the fetched logo and cover images
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Error fetching image settings');

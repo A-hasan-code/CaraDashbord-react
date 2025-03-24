@@ -49,30 +49,29 @@ const customStyles = {
 
 export function Home() {
   const dispatch = useDispatch();
-  const { gallery, page, limit, totalContacts } = useSelector((state) => state.gallery);
+  const { gallery, page, limit, totalContacts, setIsLoading } = useSelector((state) => state.gallery);
   // console.log('gallery', gallery);
   const settingsRef = useRef(null); // Ref for settings dropdown
   const dateFilterRef = useRef(null);
 
-  const [filterTags, setFilterTags] = useState([]);  // Filters for tags
   const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
   const [showDateFilter, setShowDateFilter] = useState(false);
   // const [currentPage, setCurrentPage] = useState(1)
   const [cardSize, setCardSize] = useState("small");
-  const [dateBold, setDateBold] = useState(false); const [isFiltered, setIsFiltered] = useState(false);
+  const [dateBold, setDateBold] = useState(false);
+  const [isFiltered, setIsFiltered] = useState(false);
 
 
 
   ///////////////////// select and input value
   const [selectedOptions, setSelectedOptions] = useState([]);
-  console.log('selectedOptions', selectedOptions);
-
+  // console.log('selectedOptions', selectedOptions);
   const [inputValue, setInputValue] = useState("");
   const [debouncedValue] = useDebounce(inputValue, 500);
   const [options, setOptions] = useState([]);
-  console.log('options', options);
+  // console.log('options', options);
 
   const handleMultiSelectChange = (selected) => {
     setSelectedOptions(selected || []);
@@ -98,7 +97,20 @@ export function Home() {
     fetchData();
   }, [debouncedValue]);
 
-
+  // Handle the filter for tags and dates
+  const handleTagSearch = () => {
+    if (selectedOptions.length > 0) {
+      setIsFiltered(true);
+      const selectedTags = selectedOptions.map(option => option.label).join(',');
+      dispatch(getGallery({ page: 1, limit: 10, tags: selectedTags }));
+    }
+  };
+  const handleClearFilters = () => {
+    setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+    setSelectedOptions([]);
+    dispatch(getGallery({ page, limit }));
+    setIsFiltered(false);
+  };
 
 
 
@@ -116,8 +128,6 @@ export function Home() {
   const [error, setError] = useState(null);
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY"); // Default date format
   const [showSettings, setShowSettings] = useState(false);
-  const projectData = [];
-  const projectsPerPage = 8;
 
   const { clientId, clientSecret, isEditing, cover: imagelogo } = useSelector((state) => state.clientIdsSet);
 
@@ -181,10 +191,6 @@ export function Home() {
     });
   };
 
-  // Handle the filter for tags and dates
-  const handleTagSearch = () => {
-
-  };
   const handleCloseDateFilter = () => {
     setShowDateFilter(false);
   };
@@ -211,8 +217,8 @@ export function Home() {
 
   const filterProjects = () => {
     return gallery.filter((project) => {
-      if (!isFiltered) return true;
-      const tagMatch = selectedOptions.every((option) => project.tags.includes(option?.value));
+      if (!isFiltered) return;
+      const tagMatch = selectedOptions.every((option) => project?.basicContactData?.tags.includes(option?.value));
       const projectDate = new Date(project.projectDate);
       const dateMatch = projectDate >= new Date(dateRange[0].startDate) && projectDate <= new Date(dateRange[0].endDate);
       return tagMatch || dateMatch;
@@ -220,11 +226,6 @@ export function Home() {
   };
 
   const filteredProjects = filterProjects();
-  const handleClearFilters = () => {
-    setFilterTags([]);
-    setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
-    setIsFiltered(false);
-  };
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Agar settings dropdown ka click outside ho, toh settings band karo
@@ -255,7 +256,6 @@ export function Home() {
 
   const paginate = (pageNumber) => {
     dispatch(setPage(pageNumber)); // Dispatch action to update page
-    // dispatch(getGallery({ page: pageNumber, limit })); // Fetch new gallery data
   };
   const getGridColumns = () => {
     switch (cardSize) {
@@ -642,7 +642,7 @@ export function Home() {
         <Typography className="mx-4">{page}</Typography>
         <Button
           onClick={() => paginate(page + 1)}
-          disabled={page * limit >= filteredProjects}
+          // disabled={page >= filteredProjects}
           className="hover:bg-blue-100"
         >
           Next
