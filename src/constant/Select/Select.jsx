@@ -12,6 +12,7 @@ const SelectComponent = (prop) => {
         placeholder={prop.placeholder}
         components={{ DropdownIndicator: null }}
         styles={prop.styles}
+        onInputChange={prop.onInputChange}
       />
     </>
   )

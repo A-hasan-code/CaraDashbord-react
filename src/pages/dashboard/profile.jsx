@@ -49,7 +49,7 @@ export function Profile() {
         password: "",
         confirmPassword: "",
         location_id: user.location_id,
-        image: user.image ? `http://localhost:5000/${user.image}` : "/img/bruce-mars.jpeg",
+        image: user.image ? `https://caradashboard-backend-production.up.railway.app/${user.image}` : "/img/bruce-mars.jpeg",
       });
     }
   }, [user]);

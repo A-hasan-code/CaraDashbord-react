@@ -204,7 +204,7 @@ export const Settings = () => {
         {imagelogo || imagePreview ? (
             <div className="relative">
                 <img
-                    src={`http://localhost:5000${imagelogo}` || imagePreview}  // Use Redux logo or the imagePreview state
+                    src={`https://caradashboard-backend-production.up.railway.app${imagelogo}` || imagePreview}  // Use Redux logo or the imagePreview state
                     alt="Logo Preview"
                     className="w-48 h-48 object-cover mx-auto mb-4 rounded-lg"
                 />

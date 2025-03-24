@@ -47,12 +47,12 @@ export const getgallery = async (page = 1, limit = 10) => {
     }
 };
 
-export const getSearchSuggestions = async (displaySettingData) => {
+export const getSearchSuggestions = async (searchQuery) => {
     try {
-        const response = await Axios.post('/displaysetting', displaySettingData);
+        const response = await Axios.get(`/search-suggestions?q=${encodeURIComponent(searchQuery)}`);
         return response.data;
     } catch (error) {
-        console.error('Error updating display settings:', error);
+        console.error('Error fetching search suggestions:', error);
         throw error;
     }
 };

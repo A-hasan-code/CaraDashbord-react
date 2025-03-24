@@ -20,8 +20,9 @@ import CachedIcon from '@mui/icons-material/Cached';
 import Axios from '@/Api/Axios'
 import { ToastContainer, toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
-import {getGallery} from '@/Redux/slices/Gallery.slice'
-
+import { getGallery, setPage } from '@/Redux/slices/Gallery.slice'
+import { useDebounce } from 'use-debounce';
+import { getSearchSuggestions } from "@/Api/contactapi";
 // Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
 
 //cropper
@@ -47,20 +48,59 @@ const customStyles = {
 
 
 export function Home() {
-const dispatch = useDispatch();
-  const { gallery, page, limit, totalContacts  } = useSelector((state) => state.gallery);
-  console.log('gallery', gallery);
-  
+  const dispatch = useDispatch();
+  const { gallery, page, limit, totalContacts } = useSelector((state) => state.gallery);
+  // console.log('gallery', gallery);
+  const settingsRef = useRef(null); // Ref for settings dropdown
+  const dateFilterRef = useRef(null);
 
   const [filterTags, setFilterTags] = useState([]);  // Filters for tags
   const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1)
+  // const [currentPage, setCurrentPage] = useState(1)
   const [cardSize, setCardSize] = useState("small");
-const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFiltered] = useState(false);
+  const [dateBold, setDateBold] = useState(false); const [isFiltered, setIsFiltered] = useState(false);
+
+
+
+  ///////////////////// select and input value
   const [selectedOptions, setSelectedOptions] = useState([]);
+  console.log('selectedOptions', selectedOptions);
+
+  const [inputValue, setInputValue] = useState("");
+  const [debouncedValue] = useDebounce(inputValue, 500);
+  const [options, setOptions] = useState([]);
+  console.log('options', options);
+
+  const handleMultiSelectChange = (selected) => {
+    setSelectedOptions(selected || []);
+  };
+  const handleInputChange = (value) => {
+    setInputValue(value);
+  };
+  // Use debounced value for any logic
+  useEffect(() => {
+    const fetchData = async () => {
+      if (debouncedValue) {
+        try {
+          const data = await getSearchSuggestions(debouncedValue);
+          const formattedOptions = data?.suggestions?.map(item => ({
+            label: item,
+          })) || [];
+          setOptions(formattedOptions);
+        } catch (error) {
+          toast.error("Error on fetching data");
+        }
+      }
+    };
+    fetchData();
+  }, [debouncedValue]);
+
+
+
+
 
   // State for image cropping
   const [imageSrc, setImageSrc] = useState(null);
@@ -74,16 +114,12 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
   const [coverImage, setCoverImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const options =[];
+  const [dateFormat, setDateFormat] = useState("MM/DD/YYYY"); // Default date format
   const [showSettings, setShowSettings] = useState(false);
-  const projectData  = [];
-    const projectsPerPage = 8;
+  const projectData = [];
+  const projectsPerPage = 8;
 
   const { clientId, clientSecret, isEditing, cover: imagelogo } = useSelector((state) => state.clientIdsSet);
-
-  const handleMultiSelectChange = (selected) => {
-    setSelectedOptions(selected);
-  };
 
   const handleCropClick = (project) => {
     setImageSrc(project?.imagePath);
@@ -147,7 +183,30 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
 
   // Handle the filter for tags and dates
   const handleTagSearch = () => {
-    setIsFiltered(selectedOptions.length > 0);
+
+  };
+  const handleCloseDateFilter = () => {
+    setShowDateFilter(false);
+  };
+  // Function to format dates based on selected format
+  const formatDate = (date) => {
+    const dayOptions = { weekday: "long", day: "2-digit", month: "long", year: "numeric" };
+    const dddOptions = { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" };
+    const monthDayYearOptions = { weekday: "long", month: "2-digit", day: "2-digit", year: "numeric" };
+    const monthDashDayYearOptions = { weekday: "long", month: "2-digit", day: "2-digit", year: "numeric" };
+
+    switch (dateFormat) {
+      case "Day, DD Month YYYY":
+        return new Date(date).toLocaleDateString("en-GB", dayOptions);
+      case "ddd/DD/MM/YYYY":
+        return new Date(date).toLocaleDateString("en-GB", dddOptions);
+      case "Day, MM/DD/YYYY":
+        return new Date(date).toLocaleDateString("en-US", monthDayYearOptions);
+      case "Day, MM-DD-YYYY":
+        return new Date(date).toLocaleDateString("en-US", monthDashDayYearOptions).replace(/\//g, "-");
+      default:
+        return new Date(date).toLocaleDateString("en-US", dayOptions);
+    }
   };
 
   const filterProjects = () => {
@@ -161,18 +220,44 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
   };
 
   const filteredProjects = filterProjects();
-
   const handleClearFilters = () => {
     setFilterTags([]);
     setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
     setIsFiltered(false);
   };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Agar settings dropdown ka click outside ho, toh settings band karo
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target)
+      ) {
+        setShowSettings(false);
+      }
 
- const paginate = (pageNumber) => {
+      // Agar date filter dropdown ka click outside ho, toh date filter band karo
+      if (
+        dateFilterRef.current &&
+        !dateFilterRef.current.contains(event.target)
+      ) {
+        setShowDateFilter(false);
+      }
+    };
+
+    // Event listener add karo
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup function taake memory leak na ho
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSettings, showDateFilter]); // Dependency array add ki takay effect update hota rahe
+
+  const paginate = (pageNumber) => {
     dispatch(setPage(pageNumber)); // Dispatch action to update page
-    dispatch(getGallery({ page: pageNumber, limit })); // Fetch new gallery data
+    // dispatch(getGallery({ page: pageNumber, limit })); // Fetch new gallery data
   };
-    const getGridColumns = () => {
+  const getGridColumns = () => {
     switch (cardSize) {
       case 'small':
         return 'grid-cols-5';
@@ -218,18 +303,29 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
   };
 
   useEffect(() => {
-    dispatch(getGallery({ page: 1, limit: 10 }));
-  }, [dispatch,page, limit]);
+    dispatch(getGallery({ page, limit }));
+  }, [dispatch, page, limit]);
+
+  //function to change name upper case
+  const formatName = (name) => {
+    if (!name) return ""; // Handle undefined or empty names
+
+    return name
+      .split(" ")
+      .filter((part) => part.toLowerCase() !== "null") // Remove "null" values
+      .map((part) => part.toUpperCase()) // Convert to uppercase
+      .join(" ");
+  };
 
   return (
     <div className="mt-12   relative">
       {/* Cover Image Section */}
 
-    <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6 h-full min-h-[400px] flex flex-col justify-center items-center">
+      <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6 h-full min-h-[400px] flex flex-col justify-center items-center">
         {/* Cover Image Section */}
         <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
           <img
-            src={`http://localhost:5000${imagelogo}` || imagePreview } 
+            src={`https://caradashboard-backend-production.up.railway.app${imagelogo}` || imagePreview}
             alt="Cover"
             className="object-cover w-full h-full"
           />
@@ -287,6 +383,7 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
                 value={selectedOptions}
                 onChange={handleMultiSelectChange}
                 placeholder="Search by tag"
+                onInputChange={handleInputChange}
                 styles={customStyles}
               />
             </div>
@@ -395,6 +492,12 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
                         >
                           Day, MM/DD/YYYY
                         </Button>
+                        <Button
+                          onClick={() => setDateFormat("Day, MM-DD-YYYY")}
+                          className="w-full text-left"
+                        >
+                          Day, MM-DD-YYYY
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -411,7 +514,7 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
           const croppedImage = project.cardCoverImage || '';
           return (
             <Card
-              key={project.id}
+              key={project?.basicContactData?.id}
               className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white hover:shadow-2xl transition duration-300 ${cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""
                 }`}
             >
@@ -425,18 +528,19 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
                 <div className="w-full h-90 overflow-hidden">
                   <img
                     src={croppedImage || 'https://cdn.vectorstock.com/i/500p/54/17/person-gray-photo-placeholder-man-vector-24005417.jpg'}
-                    alt={project.name}
+                    alt={project?.basicContactData?.name}
                     className="object-cover w-full h-full aspect-[3/4]"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
                     <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
-                      {project.name || 'No Name'}
+                      {/* {project.basicContactData?.name || 'No Name'} */}
+                      {formatName(project.basicContactData?.name) || "No Name"}
                     </Typography>
                   </div>
                 </div>
 
                 {/* cropper */}
-                {isCropping && activeProjectId === project.id && (
+                {isCropping && activeProjectId === project?.basicContactData?.id && (
                   <div className="crop-container">
                     <Cropper
                       image={imageSrc}
@@ -473,7 +577,8 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
               <CardBody className="p-6 flex flex-col justify-between">
                 <div className="flex flex-col flex-1">
                   <Typography variant="h1" className="flex justify-center text-lg font-semibold text-gray-700 mb-2">
-                    {project.standardCustomFields.projectDate || 'DD/MM/YYY'}
+                    {project.standardCustomFields.projectDate}
+                    {formatDate(project.standardCustomFields.projectDate)}
                   </Typography>
                   <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
                     <span>{project.standardCustomFields.startTime || '00.00'}</span>
@@ -484,27 +589,27 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
                   {/* Custom Fields */}
                   <div className="flex flex-col  mt-1 overflow-y-auto max-h-68 custom-scrollbar">
                     {project?.customCustomFields.map((field, index) => (
-                        <div key={index} className="mb-2 flex items-center justify-center space-x-2 text-sm">
-                          <div variant="body2" className="text-gray-700 font-semibold text-sm " >
-                            {field?.value?.includes('http') ? 'CustomField:' : field.label + ':'}
-                          </div>
-                          <div variant="body2" className="text-gray-600 break-words   text-" >
-                            {field?.value?.includes('http') ? (
-                              <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">
-                                {field.label}
-                              </a>
-                            ) : (
-                              field.value || 'null'
-                            )}
-                          </div>
+                      <div key={index} className="mb-2 flex items-center justify-center space-x-2 text-sm">
+                        <div variant="body2" className="text-gray-700 font-semibold text-sm " >
+                          {field?.value?.includes('http') ? 'CustomField:' : field.label + ':'}
                         </div>
-                      ))}
+                        <div variant="body2" className="text-gray-600 break-words   text-" >
+                          {field?.value?.includes('http') ? (
+                            <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">
+                              {field.label}
+                            </a>
+                          ) : (
+                            field.value || 'null'
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Custom Fields with Images */}
                   <div className="flex flex-wrap mt-1 relative">
                     {project.relatedImages
-                      .filter((field) => field.image) 
+                      .filter((field) => field.image)
                       .slice(0, 10)
                       .map((field, index) => (
                         <div key={index} className="flex items-center mb-4 space-x-4 group relative">
@@ -526,22 +631,23 @@ const [dateBold, setDateBold] = useState(false);  const [isFiltered, setIsFilter
 
 
       {/* Pagination */}
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center items-center  mt-6">
         <Button
-          onClick={() => paginate(currentPage - 1)}
-          disabled={currentPage === 1}
+          onClick={() => paginate(page - 1)}
+          disabled={page === 1}
           className="hover:bg-blue-100"
         >
           Previous
         </Button>
-        <Typography className="mx-4">{currentPage}</Typography>
+        <Typography className="mx-4">{page}</Typography>
         <Button
-          onClick={() => paginate(currentPage + 1)}
-          disabled={currentPage * projectsPerPage >= filteredProjects.length}
+          onClick={() => paginate(page + 1)}
+          disabled={page * limit >= filteredProjects}
           className="hover:bg-blue-100"
         >
           Next
         </Button>
+        <Typography className="mx-4">Total Contacts: {totalContacts}</Typography>
       </div>
     </div >
   );

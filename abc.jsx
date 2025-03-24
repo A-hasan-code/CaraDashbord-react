@@ -210,7 +210,7 @@ const dispatch = useDispatch();
         {/* Cover Image Section */}
         <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
           <img
-            src={`http://localhost:5000${imagelogo}` || imagePreview } 
+            src={`https://caradashboard-backend-production.up.railway.app${imagelogo}` || imagePreview } 
             alt="Cover"
             className="object-cover w-full h-full"
           />

@@ -9,7 +9,6 @@ export const getGallery = createAsyncThunk(
             const response = await Axios.get('/galleryview', {
                 params: { page, limit, tags } // Pass the tags properly to the API
             });
-            console.log('Fetched gallery:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching gallery:', error);

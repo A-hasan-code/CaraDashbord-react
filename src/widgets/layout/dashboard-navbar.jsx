@@ -73,7 +73,7 @@ export function DashboardNavbar({ routes }) {
         <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
           {/* Left Side: Logo */}
           <div className="capitalize flex items-center gap-2">
-            <img src={`http://localhost:5000${imagelogo}`} alt="Logo" className="h-20 w-20 object-contain" />
+            <img src={`https://caradashboard-backend-production.up.railway.app${imagelogo}`} alt="Logo" className="h-20 w-20 object-contain" />
             {/* <Typography variant="h6" className="font-bold text-black">
               XortLogix
             </Typography> */}
@@ -127,7 +127,7 @@ export function DashboardNavbar({ routes }) {
             {isInIframe && isAuthenticated && (
               <Menu>
                 <MenuHandler>
-                  <Avatar src={`http://localhost:5000/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
+                  <Avatar src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
                 </MenuHandler>
                 <MenuList>
                   <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
@@ -150,7 +150,7 @@ export function DashboardNavbar({ routes }) {
                 {isAuthenticated ? (
                   <Menu>
                     <MenuHandler>
-                      <Avatar src={`http://localhost:5000/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
+                      <Avatar src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
                     </MenuHandler>
                     <MenuList>
                       <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
