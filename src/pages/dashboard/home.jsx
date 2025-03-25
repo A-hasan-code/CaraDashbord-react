@@ -25,8 +25,6 @@ import { useDebounce } from 'use-debounce';
 import { getSearchSuggestions } from "@/Api/contactapi";
 import { addDays } from 'date-fns';
 import Cropper from "react-easy-crop";
-//cropper
-
 
 
 const customStyles = {
@@ -44,42 +42,33 @@ const customStyles = {
   }),
 };
 
-
 export function Home() {
   const dispatch = useDispatch();
   const { gallery, loading, error, page, limit, totalContacts } = useSelector((state) => state.gallery);
 
-    // Local state for filters
     const [tags, setTags] = useState('');
     const [startDate, setStartDate] = useState('');
      const [endDate, setEndDate] = useState('');
-  // console.log('gallery', gallery);
-  const settingsRef = useRef(null); // Ref for settings dropdown
-  const dateFilterRef = useRef(null);
+  
+const settingsRef = useRef(null); 
+const dateFilterRef = useRef(null);
 const [debouncedValue, setDebouncedValue] = useState('');
-  const [dateRange, setDateRange] = useState([
+const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
-  const [showDateFilter, setShowDateFilter] = useState(false);
-  // const [currentPage, setCurrentPage] = useState(1)
-  const [cardSize, setCardSize] = useState("small");
-  const [dateBold, setDateBold] = useState(false);
-  const [isFiltered, setIsFiltered] = useState(false);
+const [showDateFilter, setShowDateFilter] = useState(false);
+const [cardSize, setCardSize] = useState("small");
+const [dateBold, setDateBold] = useState(false);
+const [isFiltered, setIsFiltered] = useState(false);
 const [activeProjectId, setActiveProjectId] = useState(null);
-
- const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-
-  const [selectedOptions, setSelectedOptions] = useState([]);
-  // console.log('selectedOptions', selectedOptions);
-  const [inputValue, setInputValue] = useState("");
-  
-  const [options, setOptions] = useState([]);
-
-  const [logo, setLogo] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [coverImage, setCoverImage] = useState(null);
-
+const [crop, setCrop] = useState({ x: 0, y: 0 });
+const [zoom, setZoom] = useState(1);
+const [selectedOptions, setSelectedOptions] = useState([]);
+const [inputValue, setInputValue] = useState("");
+const [options, setOptions] = useState([]);
+const [logo, setLogo] = useState(null);
+const [imagePreview, setImagePreview] = useState(null);
+const [coverImage, setCoverImage] = useState(null);
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY"); // Default date format
   const [showSettings, setShowSettings] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
@@ -88,12 +77,12 @@ const [activeProjectId, setActiveProjectId] = useState(null);
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
-
-  const { cover: imagelogo } = useSelector((state) => state.clientIdsSet);
+ const { cover: imagelogo } = useSelector((state) => state.clientIdsSet);
     const [selectedDateRange, setSelectedDateRange] = useState({
     startDate: null,
     endDate: null,
   });
+  const { user,  } = useSelector((state) => state.user);
 // Handle image crop click
   const handleCropClick = (project) => {
     setActiveProjectId(project?.basicContactData?.id);
@@ -101,7 +90,6 @@ const [activeProjectId, setActiveProjectId] = useState(null);
     setImageSrc(project.cardCoverImage);
   };
 
-  // Handle cancel crop
   const handleCancelCrop = () => {
     setIsCropping(false);
     setImageSrc(null);
@@ -290,7 +278,7 @@ const handleSaveCrop = async () => {
         return 'grid-cols-2';
     }
   };
-//cover image
+ 
   const handleCover = async (e) => {
     const file = e.target.files[0];
     setLogo(file);
@@ -324,33 +312,29 @@ const handleSaveCrop = async () => {
   };
 
   useEffect(() => {
-    // If no date range is selected, fetch all data
+  
     const filters = selectedDateRange.startDate && selectedDateRange.endDate
       ? { startDate: selectedDateRange.startDate, endDate: selectedDateRange.endDate }
       : {};
     
-    console.log("Fetching gallery data with filters:", filters);  // Debugging line
+    console.log("Fetching gallery data with filters:", filters);  
     dispatch(getGallery({ page, limit, ...filters,tags }));
   }, [dispatch, page, limit, selectedDateRange,tags]);
 
-    // Handle page change
+
     const handlePageChange = (newPage) => {
         dispatch(setPage(newPage));
         dispatch(getGallery({ page: newPage, limit, tags, startDate, endDate }));
          window.scrollTo(0, 0);
     };
 
-    // Handle items per page change
-  
-
-  //function to change name upper case
   const formatName = (name) => {
-    if (!name) return ""; // Handle undefined or empty names
+    if (!name) return ""; 
 
     return name
       .split(" ")
-      .filter((part) => part.toLowerCase() !== "null") // Remove "null" values
-      .map((part) => part.toUpperCase()) // Convert to uppercase
+      .filter((part) => part.toLowerCase() !== "null") 
+      .map((part) => part.toUpperCase()) 
       .join(" ");
   };
 
@@ -381,10 +365,17 @@ const handleSaveCrop = async () => {
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
         </div>
     );
-  return (
+  return (<>
+  {user?.role==='superadmin' &&(
+    <div className="mt-1 flex justify-center ">
+  <h1 className="text-3xl font-bold ">Welcome to Admin Panel</h1>
+</div>
+
+  )}
+    {user?.role === 'company' && (
     <div className="mt-12   relative">
       {/* Cover Image Section */}
-
+ 
       <div className="relative bg-gradient-to-r from-gray-600 to-gray-900 text-white p-6 rounded-lg mb-6 h-full min-h-[400px] flex flex-col justify-center items-center">
         {/* Cover Image Section */}
         <div className="absolute inset-0 z-0 overflow-hidden rounded-lg">
@@ -715,7 +706,7 @@ const handleSaveCrop = async () => {
         </Button>
      
       </div>
-    </div >
+    </div >)}</>
   );
 }
 
