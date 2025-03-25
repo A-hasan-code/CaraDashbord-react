@@ -4,10 +4,10 @@ import Axios from '@/Api/Axios'; // Assuming Axios is set up for API calls
 // 1. Create the async thunk for fetching gallery data
 export const getGallery = createAsyncThunk(
     'gallery/getGallery',
-    async ({ page = 1, limit = 10, tags = '' }, { rejectWithValue }) => {
+    async ({ page = 1, limit = 10, tags = '', startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await Axios.get('/galleryview', {
-                params: { page, limit, tags } // Pass the tags properly to the API
+                params: { page, limit, tags, startDate, endDate } // Pass the tags, startDate, and endDate to the API
             });
             return response.data;
         } catch (error) {

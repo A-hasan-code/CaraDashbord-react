@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { DateRangePicker, createStaticRanges } from 'react-date-range';
-import { addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, subMonths, startOfQuarter, endOfQuarter, startOfDay, endOfDay } from 'date-fns';
+import { addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, subMonths, startOfQuarter, endOfQuarter, startOfDay, endOfDay, format } from 'date-fns';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 
-const RangeCalender = () => {
+const RangeCalender = ({ onDateRangeChange }) => {
     const [state, setState] = useState([
         { startDate: new Date(), endDate: addDays(new Date(), 7), key: 'selection' }
     ]);
-
 
     // Custom Static Ranges
     const staticRanges = createStaticRanges([
@@ -56,19 +55,32 @@ const RangeCalender = () => {
         }
     ]);
 
+    // This will update the parent with the selected date range (formatted)
+    const handleDateChange = (item) => {
+        const formattedStartDate = format(item.selection.startDate, 'yyyy-MM-dd');
+        const formattedEndDate = format(item.selection.endDate, 'yyyy-MM-dd');
+        setState([item.selection]);
+        if (onDateRangeChange) {
+            // Pass the formatted dates to the parent
+            onDateRangeChange({
+                startDate: formattedStartDate,
+                endDate: formattedEndDate
+            });
+        }
+    };
+
     return (
         <>
             <DateRangePicker
-                onChange={item => setState([item.selection])}
+                onChange={handleDateChange}
                 showSelectionPreview={true}
                 moveRangeOnFirstSelection={false}
-                // months={1}
                 ranges={state}
                 direction="horizontal"
                 staticRanges={staticRanges}
             />
         </>
-    )
-}
+    );
+};
 
-export default RangeCalender
+export default RangeCalender;

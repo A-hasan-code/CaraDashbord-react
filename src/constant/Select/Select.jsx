@@ -1,21 +1,19 @@
-import React from 'react'
-import Select from 'react-select'
+import React from 'react';
+import Select from 'react-select';
 
-const SelectComponent = (prop) => {
+const SelectComponent = ({ options, value, onChange, placeholder, onInputChange, styles }) => {
   return (
-    <>
-      <Select
-        isMulti
-        options={prop.options}
-        value={prop.value}
-        onChange={prop.onChange}
-        placeholder={prop.placeholder}
-        components={{ DropdownIndicator: null }}
-        styles={prop.styles}
-        onInputChange={prop.onInputChange}
-      />
-    </>
-  )
-}
+    <Select
+      isMulti                  // Multi-select enabled
+      options={options}        // Options passed from parent
+      value={value}            // Selected values (array)
+      onChange={onChange}      // Handle changes (selection/deselection)
+      placeholder={placeholder}
+      components={{ DropdownIndicator: null }}  // You can customize the dropdown indicator (if needed)
+      styles={styles}          // Custom styles (if any)
+      onInputChange={onInputChange}  // Handle input changes
+    />
+  );
+};
 
 export default SelectComponent;

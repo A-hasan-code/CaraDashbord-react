@@ -46,7 +46,8 @@
     "react-router-dom": "6.17.0",
     "react-select": "^5.10.1",
     "react-toastify": "^10.0.6",
-    "use-debounce": "^10.0.4"
+    "use-debounce": "^10.0.4",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/react": "18.2.31",

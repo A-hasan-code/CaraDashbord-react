@@ -12,7 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
+  TablePagination, CircularProgress
 } from '@mui/material';
 import { Card, CardHeader, CardBody, Typography } from "@material-tailwind/react";
 import { AgGridReact } from 'ag-grid-react';
@@ -21,7 +21,9 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { fetchCustomFields, updateDisplaySettings } from '@/Redux/slices/customfieldslice';  // Import the Redux actions
 import { toast } from 'react-toastify';  // Import toast library for notifications
 import 'react-toastify/dist/ReactToastify.css';
+import CachedIcon from '@mui/icons-material/Cached';
 import  {getImageSettings} from '@/Redux/slices/secretIdSlice'
+import {sync} from '@/Api/Settingsapi'
 const CustomFieldsSelection = () => {
   const dispatch = useDispatch();
   const { customFields, loading, error } = useSelector(state => state.displaycfields);
@@ -31,7 +33,7 @@ const CustomFieldsSelection = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [isSaving, setIsSaving] = useState(false);  // To manage save button state
-
+  const [isSyncing, setIsSyncing] = useState(false);
   useEffect(() => {
     // Dispatch fetchCustomFields when the component mounts
     dispatch(fetchCustomFields());
@@ -100,7 +102,20 @@ dispatch(getImageSettings())
     setRowsPerPage(+event.target.value);
     setPage(0); // Reset to first page on rows per page change
   };
+  const handleSync = async() => {
+    setIsSyncing(true);
+   try {
+    const data=await sync()
+     toast.success(data.message || "Sync complete!");
+   }catch(error){
+     console.error('Error:', error);
 
+      // Show error toast notification
+      toast.error(error.response?.data?.error || "An error occurred while syncing.");
+   }finally {
+      setIsSyncing(false);  // Stop syncing after the operation
+    }
+  };
   // Ensure displaycf is always an array and contains cf_id and cf_name
   const rowData = Array.isArray(displaycf) ? displaycf.map(field => ({
     cf_id: field.cf_id,
@@ -122,7 +137,25 @@ dispatch(getImageSettings())
             <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>
               Select Custom Fields
             </Typography>
+    
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                     <Button 
+            variant="h6" 
+            color="white" 
+            onClick={handleSync}
+            disabled={isSyncing}  // Disable when syncing
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {isSyncing ? (
+              <CircularProgress size={20} color="inherit" sx={{ animation: 'rotate 2s linear infinite' }} />
+            ) : (
+              <CachedIcon className={`cursor-pointer ${loading ? 'animate-spin' : ''}`} style={{ fontSize: 25, transition: 'transform 0.3s ease' }} />
+            )}
+          </Button>
               <TextField
                 label="Search Fields"
                 variant="outlined"

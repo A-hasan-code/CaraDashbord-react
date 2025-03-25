@@ -23,9 +23,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getGallery, setPage } from '@/Redux/slices/Gallery.slice'
 import { useDebounce } from 'use-debounce';
 import { getSearchSuggestions } from "@/Api/contactapi";
-// Sample project data (Ensure the projectDate is in a valid format like YYYY-MM-DD)
-
-//cropper
+import { addDays } from 'date-fns';
 import Cropper from "react-easy-crop";
 //cropper
 
@@ -49,11 +47,16 @@ const customStyles = {
 
 export function Home() {
   const dispatch = useDispatch();
-  const { gallery, page, limit, totalContacts, setIsLoading } = useSelector((state) => state.gallery);
+  const { gallery, loading, error, page, limit, totalContacts } = useSelector((state) => state.gallery);
+
+    // Local state for filters
+    const [tags, setTags] = useState('');
+    const [startDate, setStartDate] = useState('');
+     const [endDate, setEndDate] = useState('');
   // console.log('gallery', gallery);
   const settingsRef = useRef(null); // Ref for settings dropdown
   const dateFilterRef = useRef(null);
-
+const [debouncedValue, setDebouncedValue] = useState('');
   const [dateRange, setDateRange] = useState([
     { startDate: new Date(), endDate: new Date(), key: "selection" },
   ]);
@@ -62,138 +65,162 @@ export function Home() {
   const [cardSize, setCardSize] = useState("small");
   const [dateBold, setDateBold] = useState(false);
   const [isFiltered, setIsFiltered] = useState(false);
+const [activeProjectId, setActiveProjectId] = useState(null);
 
+ const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
-
-  ///////////////////// select and input value
   const [selectedOptions, setSelectedOptions] = useState([]);
   // console.log('selectedOptions', selectedOptions);
   const [inputValue, setInputValue] = useState("");
-  const [debouncedValue] = useDebounce(inputValue, 500);
+  
   const [options, setOptions] = useState([]);
-  // console.log('options', options);
 
-  const handleMultiSelectChange = (selected) => {
-    setSelectedOptions(selected || []);
-  };
-  const handleInputChange = (value) => {
-    setInputValue(value);
-  };
-  // Use debounced value for any logic
-  useEffect(() => {
-    const fetchData = async () => {
-      if (debouncedValue) {
-        try {
-          const data = await getSearchSuggestions(debouncedValue);
-          const formattedOptions = data?.suggestions?.map(item => ({
-            label: item,
-          })) || [];
-          setOptions(formattedOptions);
-        } catch (error) {
-          toast.error("Error on fetching data");
-        }
-      }
-    };
-    fetchData();
-  }, [debouncedValue]);
-
-  // Handle the filter for tags and dates
-  const handleTagSearch = () => {
-    if (selectedOptions.length > 0) {
-      setIsFiltered(true);
-      const selectedTags = selectedOptions.map(option => option.label).join(',');
-      dispatch(getGallery({ page: 1, limit: 10, tags: selectedTags }));
-    }
-  };
-  const handleClearFilters = () => {
-    setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
-    setSelectedOptions([]);
-    dispatch(getGallery({ page, limit }));
-    setIsFiltered(false);
-  };
-
-
-
-  // State for image cropping
-  const [imageSrc, setImageSrc] = useState(null);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const [rotation, setRotation] = useState(0);
-  const [isCropping, setIsCropping] = useState(false);
-
-  // State for uploading images
   const [logo, setLogo] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY"); // Default date format
   const [showSettings, setShowSettings] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
 
-  const { clientId, clientSecret, isEditing, cover: imagelogo } = useSelector((state) => state.clientIdsSet);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedImage, setCroppedImage] = useState(null);
 
+  const { cover: imagelogo } = useSelector((state) => state.clientIdsSet);
+    const [selectedDateRange, setSelectedDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
+// Handle image crop click
   const handleCropClick = (project) => {
-    setImageSrc(project?.imagePath);
+    setActiveProjectId(project?.basicContactData?.id);
     setIsCropping(true);
+    setImageSrc(project.cardCoverImage);
   };
 
+  // Handle cancel crop
   const handleCancelCrop = () => {
     setIsCropping(false);
     setImageSrc(null);
   };
 
+  // Handle crop completion
   const onCropComplete = (_, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
-  const handleSaveCrop = async () => {
+const getCroppedImg = (imageSrc, crop, zoom, rotation) => {
+  const image = new Image();
+  image.src = imageSrc;
+  image.crossOrigin = "anonymous"; // This allows cross-origin loading without credentials.
+
+  return new Promise((resolve, reject) => {
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+
+      canvas.width = crop.width * scaleX;
+      canvas.height = crop.height * scaleY;
+
+      ctx.drawImage(
+        image,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        crop.width * scaleX,
+        crop.height * scaleY,
+        0,
+        0,
+        crop.width * scaleX,
+        crop.height * scaleY
+      );
+
+      const croppedImage = canvas.toDataURL(); // This should now work if the image is fetched with proper CORS headers
+      resolve(croppedImage);
+    };
+
+    image.onerror = (err) => reject(err);
+  });
+};
+
+
+  // Save the cropped image
+const handleSaveCrop = async () => {
+  if (imageSrc && croppedAreaPixels) {
     try {
-      const croppedImageFinal = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
-      setCoverImage(croppedImageFinal);  // Store cropped image
+      // Get the cropped image as base64
+      const croppedImg = await getCroppedImg(imageSrc, croppedAreaPixels, zoom, rotation);
+      
+      // Save the cropped image in localStorage or state
+      localStorage.setItem(`croppedImage_${activeProjectId}`, croppedImg);
+      
+      // Optionally, set the state to show the cropped image immediately
+      setCroppedImage(croppedImg);
+
+      // Hide the cropping UI by setting isCropping to false
       setIsCropping(false);
-      setImageSrc(null);
-    } catch (e) {
-      console.error("Error cropping image:", e);
+      
+      // Optional: reset crop settings (if needed)
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setRotation(0);
+
+    } catch (error) {
+      console.error("Error cropping image:", error);
     }
-  };
+  }
+};
 
-  const getCroppedImg = (imageSrc, pixelCrop, rotation = 0) => {
-    const image = new Image();
-    image.src = imageSrc;
-
-    return new Promise((resolve, reject) => {
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const maxSize = Math.max(image.width, image.height);
-        canvas.width = maxSize;
-        canvas.height = maxSize;
-        ctx.translate(maxSize / 2, maxSize / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.translate(-maxSize / 2, -maxSize / 2);
-        ctx.drawImage(image, 0, 0);
-        const data = ctx.getImageData(0, 0, maxSize, maxSize);
-        canvas.width = pixelCrop.width;
-        canvas.height = pixelCrop.height;
-        ctx.putImageData(data, Math.round(0 - pixelCrop.x), Math.round(0 - pixelCrop.y));
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const croppedImageUrl = URL.createObjectURL(blob);
-            resolve(croppedImageUrl);
-          } else {
-            reject(new Error("Canvas is empty"));
-          }
-        });
-      };
-
-      image.onerror = (error) => {
-        reject(error);
-      };
-    });
-  };
 
   const handleCloseDateFilter = () => {
     setShowDateFilter(false);
   };
+  //fillter 
+   // console.log('options', options);
+
+ 
+  // Handle input change (on search box change)
+  const handleInputChange = (value) => {
+    setInputValue(value);
+    setOptions([]);  // Clear options on input change for fresh data
+  };
+
+  // Handle multi-select change (on selection)
+  const handleMultiSelectChange = (selected) => {
+    setSelectedOptions(selected || []); // Set selected options (multi-select)
+  };
+
+  // Fetch search suggestions based on inputValue
+  useEffect(() => {
+    const fetchData = async () => {
+      if (inputValue) { // Only fetch if there's an input value
+        try {
+          const data = await getSearchSuggestions(inputValue); // API call
+          const formattedOptions = data?.suggestions?.map(item => ({
+            label: item,  // Label for displaying
+            value: item   // Value for selection
+          })) || [];
+
+          setOptions(formattedOptions); // Set new options
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      } else {
+        setOptions([]); // Clear options if inputValue is empty
+      }
+    };
+
+    fetchData();
+  }, [inputValue]);
+
+
+
+  
   // Function to format dates based on selected format
   const formatDate = (date) => {
     const dayOptions = { weekday: "long", day: "2-digit", month: "long", year: "numeric" };
@@ -215,20 +242,20 @@ export function Home() {
     }
   };
 
-  const filterProjects = () => {
-    return gallery.filter((project) => {
-      if (!isFiltered) return;
-      const tagMatch = selectedOptions.every((option) => project?.basicContactData?.tags.includes(option?.value));
-      const projectDate = new Date(project.projectDate);
-      const dateMatch = projectDate >= new Date(dateRange[0].startDate) && projectDate <= new Date(dateRange[0].endDate);
-      return tagMatch || dateMatch;
-    });
-  };
+  // const filterProjects = () => {
+  //   return gallery.filter((project) => {
+  //     if (!isFiltered) return;
+  //     const tagMatch = selectedOptions.every((option) => project?.basicContactData?.tags.includes(option?.value));
+  //     const projectDate = new Date(project.projectDate);
+  //     const dateMatch = projectDate >= new Date(dateRange[0].startDate) && projectDate <= new Date(dateRange[0].endDate);
+  //     return tagMatch || dateMatch;
+  //   });
+  // };
 
-  const filteredProjects = filterProjects();
+  // const filteredProjects = filterProjects();
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Agar settings dropdown ka click outside ho, toh settings band karo
+     
       if (
         settingsRef.current &&
         !settingsRef.current.contains(event.target)
@@ -236,7 +263,7 @@ export function Home() {
         setShowSettings(false);
       }
 
-      // Agar date filter dropdown ka click outside ho, toh date filter band karo
+      
       if (
         dateFilterRef.current &&
         !dateFilterRef.current.contains(event.target)
@@ -245,18 +272,12 @@ export function Home() {
       }
     };
 
-    // Event listener add karo
     document.addEventListener("mousedown", handleClickOutside);
-
-    // Cleanup function taake memory leak na ho
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showSettings, showDateFilter]); // Dependency array add ki takay effect update hota rahe
+  }, [showSettings, showDateFilter]); 
 
-  const paginate = (pageNumber) => {
-    dispatch(setPage(pageNumber)); // Dispatch action to update page
-  };
   const getGridColumns = () => {
     switch (cardSize) {
       case 'small':
@@ -269,7 +290,7 @@ export function Home() {
         return 'grid-cols-2';
     }
   };
-
+//cover image
   const handleCover = async (e) => {
     const file = e.target.files[0];
     setLogo(file);
@@ -303,8 +324,24 @@ export function Home() {
   };
 
   useEffect(() => {
-    dispatch(getGallery({ page, limit }));
-  }, [dispatch, page, limit]);
+    // If no date range is selected, fetch all data
+    const filters = selectedDateRange.startDate && selectedDateRange.endDate
+      ? { startDate: selectedDateRange.startDate, endDate: selectedDateRange.endDate }
+      : {};
+    
+    console.log("Fetching gallery data with filters:", filters);  // Debugging line
+    dispatch(getGallery({ page, limit, ...filters,tags }));
+  }, [dispatch, page, limit, selectedDateRange,tags]);
+
+    // Handle page change
+    const handlePageChange = (newPage) => {
+        dispatch(setPage(newPage));
+        dispatch(getGallery({ page: newPage, limit, tags, startDate, endDate }));
+         window.scrollTo(0, 0);
+    };
+
+    // Handle items per page change
+  
 
   //function to change name upper case
   const formatName = (name) => {
@@ -317,6 +354,33 @@ export function Home() {
       .join(" ");
   };
 
+   // Handle the filter for tags and dates
+  const handleTagSearch = () => {
+    if (selectedOptions.length > 0) {
+      setIsFiltered(true);
+      const selectedTags = selectedOptions.map(option => option.label).join(',');
+      dispatch(getGallery({ page: 1, limit: 10, tags: selectedTags }));
+    }
+  };
+   const handleDateRangeChange = (range) => {
+    console.log("Date Range Selected:", range); 
+     setIsFiltered(true); // Debugging line
+    setSelectedDateRange({
+      startDate: range.startDate,
+      endDate: range.endDate,
+    });
+  };
+  const handleClearFilters = () => {
+    setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+    setSelectedOptions([]);
+    dispatch(getGallery({ page, limit }));
+    setIsFiltered(false);
+  };
+  const Loader = () => (
+        <div className="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 z-10">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+        </div>
+    );
   return (
     <div className="mt-12   relative">
       {/* Cover Image Section */}
@@ -361,7 +425,12 @@ export function Home() {
       <div className="mt-6 bg-gray p-6 rounded-xl shadow-lg">
         <div className="flex justify-between items-center mb-4">
           <div className="flex space-x-2"> </div>
-          {isFiltered && (
+      
+
+          <div className="flex items-center space-x-4 w-1/2">
+         
+            <div className="w-full"></div>
+                 {isFiltered && (
             <div className="mt-4 flex justify-center">
               <Button
                 onClick={handleClearFilters}
@@ -373,19 +442,16 @@ export function Home() {
               </Button>
             </div>
           )}
-
-          <div className="flex items-center space-x-4 w-1/2">
-            <div className="w-full"></div>
             <CachedIcon className={`cursor-pointer ${loading ? 'animate-spin' : ''}`} style={{ fontSize: 25, transition: 'transform 0.3s ease' }} />
             <div className="relative w-full">
-              <SelectComponent
-                options={options}
-                value={selectedOptions}
-                onChange={handleMultiSelectChange}
-                placeholder="Search by tag"
-                onInputChange={handleInputChange}
-                styles={customStyles}
-              />
+               <SelectComponent
+        options={options}
+        value={selectedOptions}   // Value should be the selected options (array)
+        onChange={handleMultiSelectChange}  // Handle changes in selection
+        placeholder="Search by tag"
+        onInputChange={handleInputChange}   // Handle input changes in search box
+        styles={customStyles}   // Custom styles for Select (if you have any)
+      />
             </div>
             {/* Search Button with Icon */}
             <div
@@ -411,17 +477,17 @@ export function Home() {
                     ref={dateFilterRef} // Use ref to detect clicks outside this component
                     className="absolute mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50 right-20 "
                   >
-                    <RangeCalender />
+                    <RangeCalender  onDateRangeChange={handleDateRangeChange}/>
 
 
-                    <Button
+                    {/* <Button
                       onClick={handleCloseDateFilter}
                       className="mt-4"
                       variant="outlined"
                       color="red"
                     >
                       Close
-                    </Button>
+                    </Button> */}
                   </div>
                 )}
               </div>
@@ -509,123 +575,123 @@ export function Home() {
       </div>
 
       <div className={`grid gap-2 mt-5 ${getGridColumns()}`}>
-        {gallery.map((project) => {
-          // const croppedImage = croppedImages[project.id] || project.imagePath;
-          const croppedImage = project.cardCoverImage || '';
-          return (
-            <Card
-              key={project?.basicContactData?.id}
-              className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white hover:shadow-2xl transition duration-300 ${cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""
-                }`}
-            >
-              {/* First Part: Image and Title */}
-              <div className="relative">
-                <div className="absolute top-2 right-2 z-10">
-                  <button onClick={() => handleCropClick(project)}>
-                    <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
-                  </button>
-                </div>
-                <div className="w-full h-90 overflow-hidden">
-                  <img
-                    src={croppedImage || 'https://cdn.vectorstock.com/i/500p/54/17/person-gray-photo-placeholder-man-vector-24005417.jpg'}
-                    alt={project?.basicContactData?.name}
-                    className="object-cover w-full h-full aspect-[3/4]"
+        {loading && <Loader />}
+     {gallery.length > 0 ? ( gallery.map((project) => {
+        const displayimage=localStorage.getItem(`croppedImage_${project?.basicContactData?.id}`)
+  const croppedImage = displayimage||project.cardCoverImage ; 
+   // This should be the cropped image
+  return (
+    <Card
+      key={project?.basicContactData?.id}
+      className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white hover:shadow-2xl transition duration-300 ${cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""}`}
+    >
+      {/* First Part: Image and Title */}
+      <div className="relative">
+        <div className="absolute top-2 right-2 z-10">
+          <button onClick={() => handleCropClick(project)}>
+            <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
+          </button>
+        </div>
+        <div className="w-full h-90 overflow-hidden">
+          {/* This is where the cropped image should be displayed */}
+          <img
+            src={croppedImage || 'https://cdn.vectorstock.com/i/500p/54/17/person-gray-photo-placeholder-man-vector-24005417.jpg'}
+            alt={project?.basicContactData?.name}
+            className="object-cover w-full h-full aspect-[3/4]"
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
+            <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
+              {formatName(project.basicContactData?.name) || "No Name"}
+            </Typography>
+          </div>
+        </div>
+        
+        {/* cropper UI */}
+        {isCropping && activeProjectId === project?.basicContactData?.id && (
+          <div className="crop-container">
+            <Cropper
+                    image={imageSrc}
+                    crop={crop}
+                    zoom={zoom}
+                    rotation={rotation}
+                    aspect={1} // Aspect ratio (1:1 for square)
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onRotationChange={setRotation}
+                    onCropComplete={onCropComplete}
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
-                    <Typography variant="h5" className={`text-white font-semibold ${dateBold ? "font-bold" : ""}`}>
-                      {/* {project.basicContactData?.name || 'No Name'} */}
-                      {formatName(project.basicContactData?.name) || "No Name"}
-                    </Typography>
-                  </div>
-                </div>
+            {/* Save and Cancel Buttons */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+              <button
+                onClick={handleSaveCrop}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleCancelCrop}
+                className="bg-gray-400 text-white px-4 py-2 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
-                {/* cropper */}
-                {isCropping && activeProjectId === project?.basicContactData?.id && (
-                  <div className="crop-container">
-                    <Cropper
-                      image={imageSrc}
-                      crop={crop}
-                      zoom={zoom}
-                      rotation={rotation}
-                      aspect={1} // Aspect ratio (1:1 for square)
-                      onCropChange={setCrop}
-                      onZoomChange={setZoom}
-                      onRotationChange={setRotation}
-                      onCropComplete={onCropComplete}
-                    />
-                    {/* Save and Cancel Buttons */}
-                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
-                      <button
-                        onClick={handleSaveCrop}
-                        className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancelCrop}
-                        className="bg-gray-400 text-white px-4 py-2 rounded-md"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+      {/* Other project details */}
+      <CardBody className="p-6 flex flex-col justify-between">
+        <div className="flex flex-col flex-1">
+          <Typography variant="h1" className="flex justify-center text-lg font-semibold text-gray-700 mb-2">
+            {project.standardCustomFields["Project date"] ? formatDate(project.standardCustomFields["Project date"]) : "No Project Date Available"}
+          </Typography>
+
+          <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
+            <span>{project.standardCustomFields.startTime || '00.00'}</span>
+            <span className="mx-2 text-xl">→</span>
+            <span>{project.standardCustomFields.finishTime || '00.00'}</span>
+          </div>
+
+          {/* Custom Fields */}
+          <div className="flex flex-col mt-1 overflow-y-auto max-h-68 custom-scrollbar">
+            {project?.customCustomFields.map((field, index) => (
+              <div key={index} className="mb-2 flex items-center justify-center space-x-2 text-sm">
+                <div className="text-gray-700 font-semibold text-sm">
+                  {field?.value?.includes('http') ? 'CustomField:' : field.label + ':'}
+                </div>
+                <div className="text-gray-600 break-words">
+                  {field?.value?.includes('http') ? (
+                    <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">
+                      {field.label}
+                    </a>
+                  ) : (
+                    field.value || 'null'
+                  )}
+                </div>
               </div>
-              {/* cropper */}
+            ))}
+          </div>
 
-              {/* Second Part: Project Details and Custom Fields */}
-              <CardBody className="p-6 flex flex-col justify-between">
-                <div className="flex flex-col flex-1">
-                  <Typography variant="h1" className="flex justify-center text-lg font-semibold text-gray-700 mb-2">
-                    {project.standardCustomFields.projectDate}
-                    {formatDate(project.standardCustomFields.projectDate)}
-                  </Typography>
-                  <div className="flex justify-center items-center text-lg text-gray-600 mb-2">
-                    <span>{project.standardCustomFields.startTime || '00.00'}</span>
-                    <span className="mx-2 text-xl">→</span>
-                    <span>{project.standardCustomFields.finishTime || '00.00'}</span>
-                  </div>
+          {/* Custom Fields with Images */}
+          <div className="flex flex-wrap mt-1 relative">
+            {project.relatedImages.slice(0, 10).map((imageUrl, index) => (
+              <div key={index} className="flex items-center mb-4 space-x-4 group relative">
+                <img
+                  src={imageUrl}
+                  alt={`Related Image ${index + 1}`}
+                  className="border-2 border-gray-300 rounded-md w-5 h-8 object-cover transition-all duration-300 transform group-hover:scale-110"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardBody>
+    </Card>
+  );
+})):(
+          <div>No data available for the selected date range.</div>  // Handle no data case
+        )}
 
-                  {/* Custom Fields */}
-                  <div className="flex flex-col  mt-1 overflow-y-auto max-h-68 custom-scrollbar">
-                    {project?.customCustomFields.map((field, index) => (
-                      <div key={index} className="mb-2 flex items-center justify-center space-x-2 text-sm">
-                        <div variant="body2" className="text-gray-700 font-semibold text-sm " >
-                          {field?.value?.includes('http') ? 'CustomField:' : field.label + ':'}
-                        </div>
-                        <div variant="body2" className="text-gray-600 break-words   text-" >
-                          {field?.value?.includes('http') ? (
-                            <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">
-                              {field.label}
-                            </a>
-                          ) : (
-                            field.value || 'null'
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Custom Fields with Images */}
-                  <div className="flex flex-wrap mt-1 relative">
-                    {project.relatedImages
-                      .filter((field) => field.image)
-                      .slice(0, 10)
-                      .map((field, index) => (
-                        <div key={index} className="flex items-center mb-4 space-x-4 group relative">
-                          <img
-                            src={field.image}
-                            alt={field.label}
-                            className="border-2 border-gray-300 rounded-md w-5 h-8 object-cover transition-all duration-300 transform group-hover:scale-110"
-                          />
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          );
-        })}
       </div>
 
 
@@ -633,21 +699,21 @@ export function Home() {
       {/* Pagination */}
       <div className="flex justify-center items-center  mt-6">
         <Button
-          onClick={() => paginate(page - 1)}
+        onClick={() => handlePageChange(page - 1)}
           disabled={page === 1}
           className="hover:bg-blue-100"
         >
           Previous
         </Button>
-        <Typography className="mx-4">{page}</Typography>
+        <Typography className="mx-4">Page {page} of {Math.ceil(totalContacts / limit)}</Typography>
         <Button
-          onClick={() => paginate(page + 1)}
-          // disabled={page >= filteredProjects}
+           onClick={() => handlePageChange(page + 1)}
+          disabled={page * limit >= totalContacts}
           className="hover:bg-blue-100"
         >
           Next
         </Button>
-        <Typography className="mx-4">Total Contacts: {totalContacts}</Typography>
+     
       </div>
     </div >
   );
