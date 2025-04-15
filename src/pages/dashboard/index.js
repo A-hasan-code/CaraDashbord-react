@@ -4,3 +4,4 @@ export * from "@/pages/dashboard/tables";
 export * from "@/pages/dashboard/notifications";
 export * from "@/pages/dashboard/UsersTable";
 export * from "@/pages/dashboard/Settings";
+export * from "@/pages/dashboard/gallery";

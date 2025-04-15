@@ -64,6 +64,7 @@ const CustomFieldsSelection = () => {
     dispatch(updateDisplaySettings({ displaySetting: fieldsToSave }))
       .then(() => {
         // After saving, show a success notification
+       alert('Selections saved successfully!');
         toast.success('Selections saved successfully!');
 dispatch(getImageSettings())
         // Trigger refresh or re-fetch the custom fields after saving

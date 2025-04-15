@@ -16,12 +16,12 @@ export const login = createAsyncThunk('user/login', async (loginData, { rejectWi
         const data = await loginUser(loginData);
         if (data.token) {
             localStorage.setItem('token', data.token);
-           
+
             dispatch(setUser(data.user)); // Set user and authentication state
         }
         return data;
     } catch (error) {
-        return rejectWithValue(error);
+        return rejectWithValue(error.message || 'email or password is incorrect');
     }
 });
 
@@ -119,7 +119,7 @@ const userSlice = createSlice({
             const token = localStorage.getItem('token');
             if (token) {
                 state.isAuthenticated = true;
-                
+
             } else {
                 state.isAuthenticated = false;
                 state.user = null; // Ensure user is null after logout
@@ -134,8 +134,8 @@ const userSlice = createSlice({
             })
             .addCase(register.fulfilled, (state, action) => {
                 state.loading = false;
-                
-                
+
+
             })
             .addCase(register.rejected, (state, action) => {
                 state.loading = false;
@@ -182,7 +182,7 @@ const userSlice = createSlice({
             })
             .addCase(fetchAllUsers.fulfilled, (state, action) => {
                 state.loading = false;
-                state.users = action.payload.users; 
+                state.users = action.payload.users;
             })
             .addCase(fetchAllUsers.rejected, (state, action) => {
                 state.loading = false;
@@ -193,7 +193,7 @@ const userSlice = createSlice({
             .addCase(updateUserSuperadmin.fulfilled, (state, action) => {
                 state.loading = false;
                 const updatedUser = action.payload.data;
-                
+
             })
             .addCase(updateUserSuperadmin.rejected, (state, action) => {
                 state.loading = false;
@@ -207,7 +207,7 @@ const userSlice = createSlice({
             .addCase(deleteUserSuperadmin.fulfilled, (state, action) => {
                 state.loading = false;
                 const deletedUser = action.payload.data;
-                
+
             })
             .addCase(deleteUserSuperadmin.rejected, (state, action) => {
                 state.loading = false;

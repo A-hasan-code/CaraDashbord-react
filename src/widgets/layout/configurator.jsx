@@ -1,141 +1,222 @@
-import React from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import {
-  Button,
-  IconButton,
-  Switch,
-  Typography,
-  Chip,
-} from "@material-tailwind/react";
-import { useSelector, useDispatch } from "react-redux";
-import {
-  setOpenConfigurator,
-  setSidenavColor,
-  setSidenavType,
-  setFixedNavbar,
-} from "@/Redux/slices/materialTailwindSlice"; 
-
-function formatNumber(number, decPlaces) {
-  decPlaces = Math.pow(10, decPlaces);
-  const abbrev = ["K", "M", "B", "T"];
-
-  for (let i = abbrev.length - 1; i >= 0; i--) {
-    const size = Math.pow(10, (i + 1) * 3);
-    if (size <= number) {
-      number = Math.round((number * decPlaces) / size) / decPlaces;
-      if (number === 1000 && i < abbrev.length - 1) {
-        number = 1;
-        i++;
-      }
-      number += abbrev[i];
-      break;
-    }
-  }
-  return number;
-}
+import React, { useState, useEffect } from "react";
+import { FaEye, FaEyeSlash, FaGripVertical } from "react-icons/fa";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCustomFields, updateDisplaySettings } from '@/Redux/slices/customfieldslice';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { CircularProgress, Button, TextField } from '@mui/material';
+import CachedIcon from '@mui/icons-material/Cached';
+import { sync } from '@/Api/Settingsapi';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 export function Configurator() {
   const dispatch = useDispatch();
-  const { openConfigurator, sidenavColor, sidenavType, fixedNavbar } = useSelector((state) => state.materialTailwind);
+  const { customFields, loading, error } = useSelector(state => state.displaycfields);
+  const { displaycf } = useSelector(state => state.clientIdsSet);
+  const [selectedFields, setSelectedFields] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
-  const sidenavColors = {
-    white: "from-gray-100 to-gray-100 border-gray-200",
-    dark: "from-black to-black border-gray-200",
-    green: "from-green-400 to-green-600",
-    orange: "from-orange-400 to-orange-600",
-    red: "from-red-400 to-red-600",
-    pink: "from-pink-400 to-pink-600",
+  const { gallery, page, limit, totalContacts, sortName, sortDate } = useSelector((state) => state.gallery);
+
+  useEffect(() => {
+    dispatch(fetchCustomFields());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (displaycf) {
+      const initiallySelectedFields = displaycf.filter(field => field.visible);
+      setSelectedFields(initiallySelectedFields);
+    }
+  }, [displaycf]);
+
+  const handleVisibilityToggle = (cf_id, cf_name) => {
+    const fieldExists = selectedFields.some(field => field.cf_id === cf_id);
+    if (fieldExists) {
+      setSelectedFields(prev => prev.filter(field => field.cf_id !== cf_id));
+    } else if (selectedFields.length < 5) {
+      setSelectedFields(prev => [...prev, { cf_id, cf_name, visible: true }]);
+    } else {
+      toast.warning('You can only select up to 8 fields.');
+    }
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    const fieldsToSave = selectedFields.map(field => ({
+      cf_id: field.cf_id,
+      cf_name: field.cf_name,
+      visible: field.visible,
+    }));
+
+    dispatch(updateDisplaySettings({ displaySetting: fieldsToSave }))
+      .then(() => {
+        toast.success('Selections saved successfully!');
+        setTimeout(() => {
+          dispatch(fetchCustomFields());
+          window.location.reload();
+        }, 2000);
+        setIsSaving(false);
+      })
+      .catch(() => {
+        toast.error('Error saving selections!');
+        setIsSaving(false);
+      });
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const data = await sync();
+      toast.success(data.message || "Sync complete!");
+      dispatch(fetchCustomFields())
+    } catch (error) {
+      toast.error(error.response?.data?.error || "An error occurred while syncing.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const filteredFields = customFields
+  .filter(({ cf_id, cf_key, cf_name }) =>
+    cf_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cf_key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cf_name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  .filter(({ cf_name }) => {
+    const lowerName = cf_name.toLowerCase();
+    return lowerName !== 'related images' && lowerName !== 'cover image';
+  });
+
+
+  const prioritizedFields = [
+    ...selectedFields,
+    ...filteredFields.filter(field => !selectedFields.some(selected => selected.cf_id === field.cf_id)),
+  ];
+
+  const handleDragEnd = (result) => {
+    const { destination, source } = result;
+    if (!destination) return; // Dropped outside the list
+
+    if (destination.index === source.index) return;
+
+    const reorderedFields = Array.from(selectedFields);
+    const [removed] = reorderedFields.splice(source.index, 1);
+    reorderedFields.splice(destination.index, 0, removed);
+
+    setSelectedFields(reorderedFields);
   };
 
   return (
-    <aside
-      className={`fixed top-0 right-0 z-50 h-screen w-96 bg-white px-2.5 shadow-lg transition-transform duration-300 ${
-        openConfigurator ? "translate-x-0" : "translate-x-96"
-      }`}
-    >
-      <div className="flex items-start justify-between px-6 pt-8 pb-6">
-        <div>
-          <Typography variant="h5" color="blue-gray">
-            Dashboard Configurator
-          </Typography>
-          <Typography className="font-normal text-blue-gray-600">
-            See our dashboard options.
-          </Typography>
-        </div>
-        <IconButton
-          variant="text"
-          color="blue-gray"
-          onClick={() => dispatch(setOpenConfigurator(false))}
-        >
-          <XMarkIcon strokeWidth={2.5} className="h-5 w-5" />
-        </IconButton>
-      </div>
-      <div className="py-4 px-6">
-        <div className="mb-12">
-          <Typography variant="h6" color="blue-gray">
-            Sidenav Colors
-          </Typography>
-          <div className="mt-3 flex items-center gap-2">
-            {Object.keys(sidenavColors).map((color) => (
-              <span
-                key={color}
-                className={`h-6 w-6 cursor-pointer rounded-full border bg-gradient-to-br transition-transform hover:scale-105 ${
-                  sidenavColors[color]
-                } ${
-                  sidenavColor === color ? "border-black" : "border-transparent"
-                }`}
-                onClick={() => dispatch(setSidenavColor(color))}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="mb-12">
-          <Typography variant="h6" color="blue-gray">
-            Sidenav Types
-          </Typography>
-          <Typography variant="small" color="gray">
-            Choose between 3 different sidenav types.
-          </Typography>
-          <div className="mt-3 flex items-center gap-2">
-            <Button
-              variant={sidenavType === "dark" ? "gradient" : "outlined"}
-              onClick={() => dispatch(setSidenavType("dark"))}
-            >
-              Dark
-            </Button>
-            <Button
-              variant={sidenavType === "transparent" ? "gradient" : "outlined"}
-              onClick={() => dispatch(setSidenavType("transparent"))}
-            >
-              Transparent
-            </Button>
-            <Button
-              variant={sidenavType === "white" ? "gradient" : "outlined"}
-              onClick={() => dispatch(setSidenavType("white"))}
-            >
-              White
-            </Button>
-          </div>
-        </div>
-        <div className="mb-12">
-          <hr />
-          <div className="flex items-center justify-between py-5">
-            <Typography variant="h6" color="blue-gray">
-              Navbar Fixed
-            </Typography>
-            <Switch
-              id="navbar-fixed"
-              checked={fixedNavbar}
-              onChange={() => dispatch(setFixedNavbar(!fixedNavbar))}
+    <div className="flex">
+      <aside className={`fixed top-0 right-0 z-50 h-screen w-96 bg-white shadow-lg transition-transform duration-300 overflow-y-auto ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="mb-6 sticky top-0 z-50 bg-white px-4 py-1">
+          <h2 className="text-xl font-bold mb-4">Customfields Panel</h2>
+
+          <div>
+            <TextField
+              label="Search Fields"
+              variant="outlined"
+              size="small"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              sx={{ marginBottom: '1rem', width: '100%' }}
             />
+            <Button
+              variant="contained"
+              onClick={handleSync}
+              disabled={isSyncing}
+            sx={{
+    marginBottom: '1rem',
+    width: '100%',
+    backgroundColor: '#e9eafb',
+    color: '#000',
+    '&:hover': {
+      backgroundColor: '#e9eafb',
+      color: '#5742e3',
+    },
+  }}
+            >
+              {isSyncing ? <CircularProgress size={20} /> : <CachedIcon />}
+            </Button>
           </div>
-          <hr />
         </div>
-      </div>
-    </aside>
+
+        <div className="space-y-3 max-h-90 overflow-y-auto">
+          <li className="text-sm font-semibold text-gray-800 no-underline list-none p-2">
+         visible fields
+          </li>
+
+          {/* Drag-and-drop section */}
+        <DragDropContext onDragEnd={handleDragEnd}>
+  <Droppable droppableId="droppable-fields">
+    {(provided) => (
+      <ul
+        className="space-y-3"
+        {...provided.droppableProps}
+        ref={provided.innerRef}
+      >
+        {prioritizedFields.map(({ cf_id, cf_name }, index) => {
+          const isSelected = selectedFields.some(field => field.cf_id === cf_id);
+          return (
+            <Draggable key={cf_id} draggableId={cf_id} index={index}>
+              {(provided) => (
+                <li
+                  className="flex justify-start items-center p-2 bg-gray-100 rounded-md"
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                >
+                  <FaGripVertical className="mr-2 text-gray-500 cursor-move" />
+                  <span className="text-left">{cf_name}</span>
+                  <button
+                    onClick={() => handleVisibilityToggle(cf_id, cf_name)}
+                    className="text-gray-600 hover:text-black ml-auto"
+                  >
+                    {isSelected ? <FaEye className="w-5 h-5" /> : <FaEyeSlash className="w-5 h-5" />}
+                  </button>
+                </li>
+              )}
+            </Draggable>
+          );
+        })}
+        {provided.placeholder} {/* Placeholder for the Droppable area */}
+      </ul>
+    )}
+  </Droppable>
+</DragDropContext>
+
+        </div>
+
+        <div className="mt-auto sticky bottom-0 z-50">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSave}
+            disabled={selectedFields.length === 0 || selectedFields.length > 5 || isSaving}
+            sx={{
+    width: '100%',
+    backgroundColor: '#e9eafb',
+    color: '#000',
+    '&:hover': {
+      backgroundColor: '#e9eafb',
+      color: '#5742e3',
+    },
+  }}
+          >
+            {isSaving ? 'Saving...' : 'Save Selections'}
+          </Button>
+        </div>
+      </aside>
+
+      <div
+        className={`fixed top-0 left-0 z-40 w-full h-full bg-black opacity-50 sm:hidden ${isPanelOpen ? 'block' : 'hidden'}`}
+        onClick={() => setIsPanelOpen(false)}
+      ></div>
+    </div>
   );
 }
-
-Configurator.displayName = "/src/widgets/layout/configurator.jsx";
 
 export default Configurator;

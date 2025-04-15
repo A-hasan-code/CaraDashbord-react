@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getClientSettings, saveClientSettings, setIsEditing, setClientData, getImageSettings } from '@/Redux/slices/secretIdSlice'; 
 import Axios from '@/Api/Axios'
 import { useLocation } from 'react-router-dom'; // Import useLocation
-
+import Configurator from '@/widgets/layout/configurator';
 export const Settings = () => {
     const [logo, setLogo] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -132,6 +132,7 @@ export const Settings = () => {
 
     return (
         <div>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
                 {/* First Card - Client Settings */}
                 {user?.role === 'superadmin' && (  <Card className="w-full p-4 shadow-md border rounded-lg">
@@ -181,7 +182,7 @@ export const Settings = () => {
                 </Card>)}
 
                 {/* Second Card - Static Image & Connect Button */}
-                <Card className="w-full mx-auto p-4 shadow-md border rounded-lg">
+        {user?.role === 'company' && (         <Card className="w-full mx-auto p-4 shadow-md border rounded-lg">
                     <CardContent className="text-center">
                         <img
                             src={"https://ghlcentral.com/wp-content/uploads/2023/03/GHL-on-blue-580x400.webp"}
@@ -193,20 +194,20 @@ export const Settings = () => {
                             <span>Connect</span>
                         </div>
                     </CardContent>
-                </Card>
+                </Card>)}
 
                 {/* Third Card - Image Upload */}
               <Card className="w-full mx-auto p-4 shadow-md border rounded-lg">
     <CardContent className="text-center">
         <Typography variant="h6" className="mb-4">Upload Logo</Typography>
 
-        {/* Display logo from Redux state or preview */}
+        {/* Display logo from Redux state or preview   `https://caradashboard-backend-production.up.railway.app${imagelogo}` */}
         {imagelogo || imagePreview ? (
             <div className="relative">
                 <img
                     src={`https://caradashboard-backend-production.up.railway.app${imagelogo}` || imagePreview}  // Use Redux logo or the imagePreview state
                     alt="Logo Preview"
-                    className="w-48 h-48 object-cover mx-auto mb-4 rounded-lg"
+                    className="w-[100%] h-48 object-contain mx-auto mb-4 rounded-lg"
                 />
                 <button
                     onClick={handleRemoveLogo}
@@ -242,7 +243,7 @@ export const Settings = () => {
 </Card>
 
             </div>
-            <CustomFieldsSelection />
+            {/* {user?.role === 'company' && ( <CustomFieldsSelection />)} */}
         </div>
     );
 };

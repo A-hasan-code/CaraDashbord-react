@@ -27,11 +27,11 @@ export const getSettings = async () => {
 export const saveSettings = async (data) => {
     try {
         const response = await Axios.post('/settings', { settings: data });
-        console.log(response)
+     
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || 'Error saving settings';
-        console.error('Error saving settings:', errorMessage);
+      
         throw new Error(errorMessage);
     }
 };
@@ -40,7 +40,7 @@ export const getimage = async () => {
         const response = await Axios.get('/settings');
         const settings = response.data;
 
-
+        console.log(settings)
         const logo = settings.find(item => item?.key === 'logo')?.value;
         const cover = settings.find(item => item?.key === 'cover')?.value;
         const displaycf = settings.find(item => item?.key === 'displaySetting')?.value
@@ -57,7 +57,7 @@ export const sync = async () => {
     try {
         const response = await Axios.get('/custom-fields');
 
-        console.log('Custom fields fetched successfully:', response.data);
+    
 
 
         return response.data;
@@ -67,4 +67,7 @@ export const sync = async () => {
 
 
     }
+}
+export const webhook =async()=>{
+    
 }

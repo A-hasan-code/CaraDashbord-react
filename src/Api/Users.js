@@ -14,7 +14,7 @@ export const registerUser = async (userData) => {
 export const loginUser = async (loginData) => {
     try {
         const response = await Axios.post('/login', loginData);
-        console.log(response.data)
+      
         return response.data;
     } catch (error) {
         throw error.response.data;  // Handle error
@@ -84,12 +84,12 @@ export const logoutUser = async () => {
 // Update user by superadmin
 export const updateUserBySuperadmin = async (userId, updatedData) => {
     try {
-        console.log('Sending update request for user:', userId, 'with data:', updatedData);
+        
         const response = await Axios.put(`/edit/${userId}`, updatedData);
-        console.log('Response data from updateUserBySuperadmin:', response.data);
+     
         return response.data;  // Return the response if needed
     } catch (error) {
-        console.error('Error updating user:', error.response?.data || error.message);
+        
         return error.response?.data || error.message;  // Return the error message if needed
     }
 };
@@ -97,9 +97,9 @@ export const updateUserBySuperadmin = async (userId, updatedData) => {
 // Delete user by superadmin
 export const deleteUserBySuperadmin = async (userId) => {
     try {
-        console.log('Sending delete request for user:', userId);
+        
         const response = await Axios.delete(`/adminuser/${userId}`);
-        console.log('Response data from deleteUserBySuperadmin:', response.data);
+
         return response.data;  // Return the response if needed
     } catch (error) {
         console.error('Error deleting user:', error.response?.data || error.message);

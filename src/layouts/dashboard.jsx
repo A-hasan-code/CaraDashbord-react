@@ -2,10 +2,9 @@ import { Routes, Route } from "react-router-dom";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { IconButton } from "@material-tailwind/react";
 import {
-  Sidenav,
+ 
   DashboardNavbar,
-  Configurator,
-  Footer,
+
 } from "@/widgets/layout";
 import routes from "@/routes";
 
@@ -17,7 +16,7 @@ export function Dashboard() {
 
 
   // State to manage iframe visibility
-  const [iframeVisible, setIframeVisible] = useState(true);
+  const [iframeVisible, setIframeVisible] = useState(false);
 
   // Toggle iframe visibility (this can be triggered based on user interaction)
   const toggleIframeVisibility = () => setIframeVisible(!iframeVisible);
@@ -26,8 +25,8 @@ export function Dashboard() {
   const sidenavClass = iframeVisible ? "" : "xl:ml-80";
 
   return (
-    <div className="min-h-screen bg-blue-gray-50/50">
-      {/* Conditionally render Sidenav based on iframe visibility */}
+    <div className="min-h-screen bg-white">
+      {/* Conditionally render Sidenav based on iframe visibility
       {!iframeVisible && (
         <Sidenav
           routes={routes}
@@ -35,9 +34,9 @@ export function Dashboard() {
             "/img/logo-ct-dark.png"
           }
         />
-      )}
+      )} */}
 
-      <div className={`p-4 ${sidenavClass}`}>
+      <div className={`p-4`}>
         <DashboardNavbar routes={routes} /> {/* Pass routes to DashboardNavbar */}
         
         {/* You can trigger iframe visibility from here */}

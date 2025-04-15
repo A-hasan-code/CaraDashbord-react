@@ -12,7 +12,7 @@ import {
   PencilIcon,
   CheckIcon,
   EyeIcon,
-  EyeSlashIcon,
+  EyeSlashIcon,ArrowLeftIcon 
 } from "@heroicons/react/24/solid";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserProfile, updateProfile } from "@/Redux/slices/User.Slice";
@@ -49,7 +49,9 @@ export function Profile() {
         password: "",
         confirmPassword: "",
         location_id: user.location_id,
-        image: user.image ? `https://caradashboard-backend-production.up.railway.app/${user.image}` : "/img/bruce-mars.jpeg",
+        image: user.image
+          ? `https://caradashboard-backend-production.up.railway.app${user.image}`
+          : "/img/bruce-mars.jpeg", // Fallback image if no user image
       });
     }
   }, [user]);
@@ -67,7 +69,7 @@ export function Profile() {
     if (file) {
       setFormData((prevData) => ({
         ...prevData,
-        image: URL.createObjectURL(file),
+        image: file, // Store the file directly
       }));
     }
   };
@@ -89,17 +91,22 @@ export function Profile() {
     formDataToSend.append("password", formData.password);
     formDataToSend.append("confirmPassword", formData.confirmPassword);
     formDataToSend.append("location_id", formData.location_id);
+
     if (formData.image && formData.image instanceof File) {
-      formDataToSend.append("image", formData.image);
+      formDataToSend.append("image", formData.image); // Append the image file directly
     }
 
     try {
-      const response = await axios.put("http://localhost:5000/api/v1/profile", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await axios.put(
+        "https://caradashboard-backend-production.up.railway.app/api/v1/profile",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (response.data.success) {
         toast.success("Profile updated successfully!");
@@ -124,19 +131,35 @@ export function Profile() {
     }
   };
 
+  const goBack = () => {
+    window.history.back(); // This will take the user back to the previous page
+  };
+
   return (
     <>
       <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover bg-center">
         <div className="absolute inset-0 h-full w-full bg-gradient-to-t from-black/75 to-transparent" />
+        
       </div>
 
       <Card className="mx-3 -mt-16 mb-10 lg:mx-4 border border-blue-gray-100 shadow-xl">
+
+        
         <CardBody className="p-6 pb-10">
+ {/* Add "Back" Button */}
+          <div className="mt-8 flex justify-end">
+            <ArrowLeftIcon
+              className="w-10 h-10 text-black cursor-pointer hover:text-blue-800"
+              onClick={goBack}
+            
+            />
+           
+          </div>
           <div className="flex flex-col items-center">
             <div className="mb-2 flex justify-center items-center">
               <div className="relative flex flex-col items-center">
                 <Avatar
-                  src={formData?.image}
+                  src={formData?.image instanceof File ? URL.createObjectURL(formData.image) : formData?.image} // If the image is a file, use object URL
                   alt="User Avatar"
                   className="h-[150px] w-[150px] shadow-lg shadow-blue-gray-500/40 border-2 border-white"
                 />
@@ -273,6 +296,8 @@ export function Profile() {
               </Button>
             </div>
           )}
+          
+         
         </CardBody>
       </Card>
     </>

@@ -1,33 +1,33 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import Axios from '@/Api/Axios'; // Assuming Axios is set up for API calls
+import Axios from '@/Api/Axios'; // Ensure Axios is correctly set up
 
-// 1. Create the async thunk for fetching gallery data
+// Regular fetch with loading
 export const getGallery = createAsyncThunk(
     'gallery/getGallery',
-    async ({ page = 1, limit = 10, tags = '', startDate, endDate }, { rejectWithValue }) => {
+    async ({ page = 1, limit = 16, tags = '', startDate, endDate, sortName, sortDate }, { rejectWithValue }) => {
         try {
             const response = await Axios.get('/galleryview', {
-                params: { page, limit, tags, startDate, endDate } // Pass the tags, startDate, and endDate to the API
+                params: { page, limit, tags, startDate, endDate, sortName, sortDate }
             });
             return response.data;
         } catch (error) {
-            console.error('Error fetching gallery:', error);
+            // Return error message if response is not available
             return rejectWithValue(error.response ? error.response.data : error.message);
         }
     }
 );
 
-// 2. Define the initial state for the slice
 const initialState = {
-    gallery: [],    // Stores the gallery data
-    loading: false,  // Loading state to show spinner or loader
-    error: null,     // Error state to handle failed requests
-    page: 1,         // Current page for pagination
-    limit: 10,       // Items per page limit
-    totalContacts: 0 // Total contacts to manage pagination
+    gallery: [],
+    loading: false,
+    error: null,
+    page: 1,
+    limit: 48,
+    totalContacts: 0,
+    sortName: 'asc',
+    sortDate: 'asc',
 };
 
-// 3. Create the Redux slice
 const gallerySlice = createSlice({
     name: 'gallery',
     initialState,
@@ -38,29 +38,29 @@ const gallerySlice = createSlice({
         setLimit: (state, action) => {
             state.limit = action.payload;
         },
+        setSortName: (state, action) => {
+            state.sortName = action.payload;
+        },
+        setSortDate: (state, action) => {
+            state.sortDate = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder
-            // Handle 'pending' state
             .addCase(getGallery.pending, (state) => {
                 state.loading = true;
             })
-            // Handle 'fulfilled' state when the API call is successful
             .addCase(getGallery.fulfilled, (state, action) => {
                 state.loading = false;
-                state.gallery = action.payload.contacts; // Store fetched contacts
-                state.totalContacts = action.payload.totalContacts; // Total contacts count
+                state.gallery = action.payload.contacts;  // Ensure correct property name from the API response
+                state.totalContacts = action.payload.totalContacts;  // Ensure the `totalContacts` is coming as expected from the API
             })
-            // Handle 'rejected' state when the request fails
             .addCase(getGallery.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || 'Error occurred while fetching gallery';
             });
-    }
+    },
 });
 
-// Export the actions for later use in the components
-export const { setPage, setLimit } = gallerySlice.actions;
-
-// Export the reducer to be used in the store
+export const { setPage, setLimit, setSortName, setSortDate } = gallerySlice.actions;
 export default gallerySlice.reducer;

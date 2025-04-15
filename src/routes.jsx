@@ -7,23 +7,29 @@ import {
   ServerStackIcon,
   RectangleStackIcon,
 } from "@heroicons/react/24/solid";
-import { Home, Profile, Tables, UsersTable, Settings } from "@/pages/dashboard";
+import { Home, Profile, Tables, UsersTable, Settings,Gallery } from "@/pages/dashboard";
 import { SignIn } from "@/pages/auth";
-import ProtectedRoute from "./ProtectedRoute";
+
 
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
-
+  
 export const routes = [
   {
     layout: "dashboard",
     pages: [
       {
         icon: <HomeIcon {...icon} />,
+        name: "gallery",
+        path: "/gallery",
+        element:<Gallery />
+      },
+       {
+        icon: <HomeIcon {...icon} />,
         name: "dashboard",
         path: "/home",
-        element:<Home />
+        element:<Home/>
       },
       {
         icon: <UserCircleIcon {...icon} />,

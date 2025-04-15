@@ -5,12 +5,14 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserProfile, setUserFromLocalStorage } from "@/Redux/slices/User.Slice";
-import { Home, Profile, Tables, UsersTable, Settings } from "@/pages/dashboard";
+import { toast } from 'react-toastify';
 import ProtectedRoute from "@/ProtectedRoute";
 import "@/app.css";
-import Protect from "./Protect";
+
 
 function App() {
+
+
   const dispatch = useDispatch();
   const { isAuthenticated, user, error } = useSelector((state) => state.user);
 

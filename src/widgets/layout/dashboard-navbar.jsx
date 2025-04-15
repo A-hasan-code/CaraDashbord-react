@@ -1,41 +1,48 @@
-import { useLocation, Link, useNavigate, NavLink } from "react-router-dom";
+import { Link,useLocation, NavLink, useNavigate } from "react-router-dom";
 import {
   Navbar,
   Typography,
   Button,
   IconButton,
-  Breadcrumbs,
+  Avatar,
   Menu,
   MenuHandler,
   MenuList,
   MenuItem,
-  Avatar,
 } from "@material-tailwind/react";
-import {
-  UserCircleIcon,
-  Cog6ToothIcon,
-  BellIcon,
-  ClockIcon,
-  CreditCardIcon,
-  Bars3Icon,
-} from "@heroicons/react/24/solid";
+import { Bars3Icon, XMarkIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useSelector, useDispatch } from "react-redux";
+import { logout } from "@/Redux/slices/User.Slice";
+import { getImageSettings } from "@/Redux/slices/secretIdSlice";
+import { useEffect, useState } from "react";
 
-import { logout } from "@/Redux/slices/User.Slice"; 
-import {getImageSettings } from '@/Redux/slices/secretIdSlice'; 
-import { useEffect } from "react";
 export function DashboardNavbar({ routes }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
-    const { logo: imagelogo } = useSelector((state) => state.clientIdsSet);
-  // Access user data and authentication status from the userSlice
-  const { user, isAuthenticated } = useSelector((state) => state.user);  // Assuming `user` slice holds the authentication status and user data
-  
-  // Check if the page is in an iframe
-  const isInIframe = window.self === window.top;
+  const { logo: imagelogo } = useSelector((state) => state.clientIdsSet);
+  const { user, isAuthenticated } = useSelector((state) => state.user);
+  const isInIframe = window.self !== window.top;
+useEffect(() => {
+   const hasReloaded = sessionStorage.getItem("iframe-reloaded");
+
+    if (isInIframe && !hasReloaded) {
+      sessionStorage.setItem("iframe-reloaded", "true");
+      console.log("Reloading iframe app once...");
+      window.location.reload();
+    }
+},[])
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(getImageSettings());
+  }, [dispatch]);
+
+  const handleDrawerToggle = () => {
+    setIsDrawerOpen((prevState) => !prevState); // Toggle state
+  };
 
   const handleProfileClick = () => {
     if (isAuthenticated) {
@@ -44,113 +51,151 @@ export function DashboardNavbar({ routes }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token from localStorage
+    localStorage.removeItem("token");
     dispatch(logout());
-     dispatch(clearUser());  // Dispatch logout action from userSlice
     navigate("/auth/sign-in");
   };
 
-  // Filter routes based on authentication status
+  const isGalleryPage = page.toLowerCase() === "gallery";
+
   const filteredRoutes = routes.map((route) => ({
     ...route,
     pages: route.pages.filter(
-      (page) => !(page.name === 'sign in' && isAuthenticated)
+      (page) =>
+        !(page.name === "sign in" && isAuthenticated) &&
+        !(user?.role === "superadmin" && (page.name === "Contacts" || page.name === "gallery")) &&
+        !(user?.role === "company" && (page.name === "User" || page.name === "gallery"))
     ),
   }));
-  useEffect(()=>{
-    dispatch(getImageSettings());
-  },[dispatch])
 
   return (
     <>
+      <Navbar color="transparent" className="rounded-xl transition-all sticky top-4 z-40 px-0 py-1" fullWidth>
+        <div className="flex justify-between items-center w-full">
 
-      <Navbar
-        color="transparent"
-        className={`rounded-xl transition-all sticky top-4 z-40 py-3   px-0 py-1`}
-        fullWidth
-        // blurred={fixedNavbar}
-      >
-        <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
           {/* Left Side: Logo */}
-          <div className="capitalize flex items-center gap-2">
-            <img src={`https://caradashboard-backend-production.up.railway.app${imagelogo}`} alt="Logo" className="h-20 w-20 object-contain" />
-            {/* <Typography variant="h6" className="font-bold text-black">
-              XortLogix
-            </Typography> */}
-          </div>
+          {!isInIframe && ( <div className="capitalize flex items-center gap-2">
+            <img
+              src={`https://caradashboard-backend-production.up.railway.app${imagelogo}`}
+              alt="Logo"
+              className="h-20 w-20 object-contain"
+            />
+          </div>)}
 
-          {/* Right Side: Profile and Routes */}
+          {/* Right Side: Hamburger Menu & Profile */}
           <div className="flex items-center gap-6">
-            {/* Only show the sidenav toggle in non-iframe mode */}
+            {/* Hamburger Menu for Mobile 
             {isInIframe && (
               <IconButton
                 variant="text"
                 color="blue-gray"
-                className="grid xl:hidden"
-                // onClick={() => dispatch(setOpenSidenav(!openSidenav))}
+                className="xl:hidden"
+                onClick={handleDrawerToggle}
               >
-                <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
+                {isDrawerOpen ? (
+                  <XMarkIcon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
+                ) : (
+                  <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
+                )}
               </IconButton>
-            )}
+            )}*/}
 
-            {/* Loop through routes if not in iframe */}
-            {isInIframe && (
-              <div className="m-4 flex items-center gap-x-6">
-                {filteredRoutes.map(({ layout, title, pages }, key) => (
-                  <div key={key} className="flex items-center space-x-6">
-                    {title && (
-                      <Typography variant="small" className="font-black uppercase opacity-75">
-                        {title}
-                      </Typography>
-                    )}
-                    {pages.map(({ icon, name, path }) => (
-                      <NavLink key={name} to={`/${layout}${path}`}>
-                        {({ isActive }) => (
-                          <Button
-                            variant={isActive ? "gradient" : "text"}
-                            className="flex items-center gap-2 px-4 capitalize"
-                          >
-                            {icon}
-                            <Typography color="inherit" className="font-medium capitalize">
-                              {name}
-                            </Typography>
-                          </Button>
-                        )}
-                      </NavLink>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Menu for Desktop 
+            <div className="hidden md:flex items-center gap-6">
+              {!isGalleryPage && isInIframe && isAuthenticated && (
+                <div className="m-4 flex items-center gap-x-6">
+                  {filteredRoutes.map(({ layout, title, pages }, key) => (
+                    <div key={key} className="flex items-center space-x-6">
+                      {title && (
+                        <Typography variant="small" className="font-black uppercase opacity-75">
+                          {title}
+                        </Typography>
+                      )}
+                      {pages.map(({ icon, name, path }) => (
+                        <NavLink key={name} to={`/${layout}${path}`}>
+                          {({ isActive }) => (
+                            <Button
+                              variant={isActive ? "gradient" : "text"}
+                              className="flex items-center gap-2 px-4 capitalize"
+                            >
+                              {icon}
+                              <Typography color="inherit" className="font-medium capitalize">
+                                {name}
+                              </Typography>
+                            </Button>
+                          )}
+                        </NavLink>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>*/}
 
-            {/* User Menu */}
+            {/* User Menu 
             {isInIframe && isAuthenticated && (
               <Menu>
-                <MenuHandler>
-                  <Avatar src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
-                </MenuHandler>
-                <MenuList>
-                  <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
-                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
-                </MenuList>
+                <Avatar
+                  src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`}
+                  alt="User Avatar"
+                  className="cursor-pointer"
+                  
+                />
               </Menu>
-            )}
-
-            {/* Show settings and sign-in options for non-iframe case */}
+            )}*/}
+            {/* For non-iframe or if not authenticated */}
+             <div className="hidden md:flex items-center gap-6">
+              {!isGalleryPage && !isInIframe && isAuthenticated && (
+                <div className="m-4 flex items-center gap-x-6">
+                  {filteredRoutes.map(({ layout, title, pages }, key) => (
+                    <div key={key} className="flex items-center space-x-6">
+                      {title && (
+                        <Typography variant="small" className="font-black uppercase opacity-75">
+                          {title}
+                        </Typography>
+                      )}
+                      {pages.map(({ icon, name, path }) => (
+                        <NavLink key={name} to={`/${layout}${path}`}>
+                          {({ isActive }) => (
+                            <Button
+                              variant={isActive ? "gradient" : "text"}
+                              className="flex items-center gap-2 px-4 capitalize"
+                            >
+                              {icon}
+                              <Typography color="inherit" className="font-medium capitalize">
+                                {name}
+                              </Typography>
+                            </Button>
+                          )}
+                        </NavLink>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {!isInIframe && (
+            
               <div className="flex gap-6">
-                <Link to="/settings">
+                   <div className="capitalize flex items-center gap-2">
+            
+          </div>
+                {/* <Link to="/Settings">
                   <Button variant="text" className="flex items-center gap-2 px-4">
                     <Cog6ToothIcon className="h-6 w-6" />
                     <Typography color="inherit" className="font-medium capitalize">
                       Settings
                     </Typography>
                   </Button>
-                </Link>
+                </Link> */}
                 {isAuthenticated ? (
                   <Menu>
                     <MenuHandler>
-                      <Avatar src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`} alt="User Avatar" className="cursor-pointer" />
+                      <Avatar
+                        src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`}
+                        alt="User Avatar"
+                        className="cursor-pointer"
+                      />
                     </MenuHandler>
                     <MenuList>
                       <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
@@ -173,31 +218,52 @@ export function DashboardNavbar({ routes }) {
         </div>
       </Navbar>
 
-      {/* Breadcrumbs */}
-<Breadcrumbs className={`bg-transparent p-1 transition-all mt-4`}>
-  <Typography 
-    variant="small" 
-    color="blue-gray" 
-    className="font-normal opacity-50 transition-all hover:text-blue-500 hover:opacity-100">
-    {layout.replace(/\b\w/g, (char) => char.toUpperCase())}
-  </Typography>
-  <Typography 
-    variant="small" 
-    color="blue-gray" 
-    className="font-normal p-0">
-    {page ? page.replace(/\b\w/g, (char) => char.toUpperCase()) : "Dashboard"}
-  </Typography>
-</Breadcrumbs>
+      {/* Mobile Drawer */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+          <div className="absolute top-0 right-0 p-6 bg-white w-64 h-full shadow-xl">
+            <IconButton
+              variant="text"
+              color="blue-gray"
+              onClick={handleDrawerToggle} // Close drawer when X is clicked
+              className="absolute top-0 right-0"
+            >
+              <XMarkIcon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
+            </IconButton>
+            <div className="p-4">
+              {filteredRoutes.map(({ layout, title, pages }, key) => (
+                <div key={key}>
+                  {title && (
+                    <Typography variant="small" className="font-black uppercase opacity-75">
+                      {title}
+                    </Typography>
+                  )}
+                  {pages.map(({ icon, name, path }) => (
+                    <NavLink key={name} to={`/${layout}${path}`} onClick={() => setIsDrawerOpen(false)}>
+                      <Button variant="text" className="w-full capitalize py-2 flex items-center gap-4">
+                        {icon}
+                        <Typography color="inherit" className="font-medium capitalize">
+                          {name}
+                        </Typography>
+                      </Button>
+                    </NavLink>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-
-
-      <Typography variant="h6" color="blue-gray">
-        {page ? page.replace(/\b\w/g, (char) => char.toUpperCase()) : "Dashboard"}
-      </Typography>
+      {/* Page Title */}
+      <div className="mt-0  p-2 rounded-xl  border bg-gray-100 bg-blend-darken">
+        <Typography variant="h5" color="blue-gray">
+          {page ? (page.toLowerCase() === "gallery" ? "Project Gallery" : page.replace(/\b\w/g, (char) => char.toUpperCase())) : "Dashboard"}
+        </Typography>
+      </div>
     </>
   );
 }
 
 DashboardNavbar.displayName = "/src/widgets/layout/dashboard-navbar.jsx";
-
 export default DashboardNavbar;
