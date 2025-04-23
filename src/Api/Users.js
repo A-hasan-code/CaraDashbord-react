@@ -6,7 +6,7 @@ export const registerUser = async (userData) => {
         const response = await Axios.post('/register', userData);
         return response.data;
     } catch (error) {
-        throw error.response.data;  // Handle error
+        throw error.message;  // Handle error
     }
 };
 
@@ -14,10 +14,11 @@ export const registerUser = async (userData) => {
 export const loginUser = async (loginData) => {
     try {
         const response = await Axios.post('/login', loginData);
-      
+
         return response.data;
     } catch (error) {
-        throw error.response.data;  // Handle error
+      
+        throw error.message;  // Handle error
     }
 };
 
@@ -27,7 +28,7 @@ export const getUserProfile = async () => {
         const response = await Axios.get('/profile');
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error.message;
     }
 };
 
@@ -37,7 +38,7 @@ export const updateUserProfile = async (updateData) => {
         const response = await Axios.put('/profile', updateData);
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error.message;
     }
 };
 
@@ -47,7 +48,7 @@ export const forgotPassword = async (email) => {
         const response = await Axios.post('/forgot-password', { email });
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error.message;
     }
 };
 
@@ -57,7 +58,7 @@ export const resetPassword = async (resetToken, newPassword) => {
         const response = await Axios.put(`/reset-password/${resetToken}`, { password: newPassword });
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error.message;
     }
 };
 
@@ -67,7 +68,7 @@ export const getAllUsers = async () => {
         const response = await Axios.get('/getall');
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error.message;
     }
 };
 
@@ -77,19 +78,19 @@ export const logoutUser = async () => {
         const response = await Axios.get('/logout');
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error.message;
     }
 };
 
 // Update user by superadmin
 export const updateUserBySuperadmin = async (userId, updatedData) => {
     try {
-        
+
         const response = await Axios.put(`/edit/${userId}`, updatedData);
-     
+
         return response.data;  // Return the response if needed
     } catch (error) {
-        
+
         return error.response?.data || error.message;  // Return the error message if needed
     }
 };
@@ -97,7 +98,7 @@ export const updateUserBySuperadmin = async (userId, updatedData) => {
 // Delete user by superadmin
 export const deleteUserBySuperadmin = async (userId) => {
     try {
-        
+
         const response = await Axios.delete(`/adminuser/${userId}`);
 
         return response.data;  // Return the response if needed

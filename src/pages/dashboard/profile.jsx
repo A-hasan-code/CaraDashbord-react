@@ -51,7 +51,7 @@ export function Profile() {
         location_id: user.location_id,
         image: user.image
           ? `https://caradashboard-backend-production.up.railway.app${user.image}`
-          : "/img/bruce-mars.jpeg", // Fallback image if no user image
+          : "https://missysue.com/wp-content/uploads/2019/08/half-up-dutch-braids-2.jpg", // Fallback image if no user image
       });
     }
   }, [user]);

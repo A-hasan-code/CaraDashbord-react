@@ -14,9 +14,7 @@
 } */
  /* Global scrollbar styles */
 @layer components {
-  .custom-scrollbar {
-    @apply overflow-y-auto max-h-64;
-  }
+  
 
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
@@ -101,4 +99,60 @@ body{
 .linesettings{
   line-height: 0.9 !important;
 }
+}
+
+/* Header row text and icons */
+.ag-header-row {
+  color: #5742e3 !important;
+  fill: #5742e3 !important;
+}
+
+/* Header label text */
+.ag-header-cell-label {
+  color: #5742e3 !important;
+}
+
+/* Sorting/filter icons inside header */
+.ag-icon {
+  color: #5742e3 !important;
+  fill: #5742e3 !important;
+}
+
+/* Button icons (filter, export, etc.) */
+.ag-button-icon,
+.ag-icon-button {
+  color: #5742e3 !important;
+  fill: #5742e3 !important;
+}
+
+/* Any ag-grid button */
+.ag-standard-button,
+.ag-paging-button {
+  color: #5742e3 !important;
+  border-color: #5742e3 !important;
+  background-color: #e9eafb !important; /* Optional subtle bg */
+}
+
+.ag-standard-button:hover,
+.ag-paging-button:hover {
+  background-color: #accdfa !important;
+  color: #5742e3 !important;
+}
+
+/* Paging dropdown + summaries */
+.ag-paging-page-size,
+.ag-paging-row-summary-panel,
+.ag-paging-page-summary-panel {
+  color: #5742e3 !important;
+}
+
+/* Optional: border + font styling */
+.ag-root-wrapper {
+  border-color: #d9d9d9 !important;
+}
+
+.ag-theme-alpine {
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
 }

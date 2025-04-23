@@ -133,16 +133,16 @@ dispatch(getImageSettings())
   return (
     <div className="p-6">
       <Card>
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <CardHeader  className="mb-8 p-6 bg-[#accdfa]" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className='flex items-center justify-between'>
-            <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" className="text-[#5742e3]" sx={{ flexGrow: 1 }}>
               Select Custom Fields
             </Typography>
     
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                      <Button 
             variant="h6" 
-            color="white" 
+       className="text-[#5742e3]" 
             onClick={handleSync}
             disabled={isSyncing}  // Disable when syncing
             sx={{
@@ -152,9 +152,9 @@ dispatch(getImageSettings())
             }}
           >
             {isSyncing ? (
-              <CircularProgress size={20} color="inherit" sx={{ animation: 'rotate 2s linear infinite' }} />
+              <CircularProgress size={20} className="text-[#5742e3]"  sx={{ animation: 'rotate 2s linear infinite' }} />
             ) : (
-              <CachedIcon className={`cursor-pointer ${loading ? 'animate-spin' : ''}`} style={{ fontSize: 25, transition: 'transform 0.3s ease' }} />
+              <CachedIcon className={`cursor-pointer ${loading ? 'animate-spin' : ''} text-[#5742e3]`} style={{ fontSize: 25, transition: 'transform 0.3s ease' }} />
             )}
           </Button>
               <TextField
@@ -163,9 +163,9 @@ dispatch(getImageSettings())
                 size="small"
                 value={searchQuery}
                 onChange={handleSearch}
-                InputLabelProps={{ style: { color: 'white' } }}
-                InputProps={{ style: { color: 'white' } }}
-                sx={{ backgroundColor: 'transparent', borderRadius: 1, border: '2px solid white' }}
+                InputLabelProps={{ style: { color: '#5742e3' } }}
+                InputProps={{ style: { color: '#5742e3' } }}
+                sx={{ backgroundColor: 'transparent', borderRadius: 1,  }}
               />
             </Box>
           </div>
@@ -177,17 +177,17 @@ dispatch(getImageSettings())
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Field (ID)</strong></TableCell>
-                    <TableCell align="left"><strong>Value (Name)</strong></TableCell>
-                    <TableCell align="center"><strong>Select</strong></TableCell>
+                    <TableCell  sx={{color:'#5742e3'}} ><strong>Field (ID)</strong></TableCell>
+                    <TableCell align="left"   sx={{color:'#5742e3'}} ><strong>Value (Name)</strong></TableCell>
+                    <TableCell align="center"   sx={{color:'#5742e3'}} ><strong>Select</strong></TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody  className="text-[#5742e3]">
                   {paginatedFields.map(({ cf_key, cf_name, cf_id }) => (
                     <TableRow key={cf_id} hover>
-                      <TableCell>{cf_id}</TableCell>
-                      <TableCell>{cf_name}</TableCell>
-                      <TableCell align="center">
+                      <TableCell  className="text-[#5742e3]" >{cf_id}</TableCell>
+                      <TableCell  className="text-[#5742e3]" >{cf_name}</TableCell>
+                      <TableCell align="center"  className="text-[#5742e3]" >
                         <Checkbox
                           checked={selectedFields.some(field => field.cf_id === cf_id)}
                           onChange={() => handleSelection(cf_id, cf_name)}
@@ -220,10 +220,10 @@ dispatch(getImageSettings())
 
       <div className="mt-12">
         <Card >
-          <CardHeader variant="gradient" color="gray" className="mb-8 p-6" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" color="white" sx={{ flexGrow: 1 }}>Selected Fields</Typography>
+          <CardHeader   className="mb-8 p-6 bg-[#accdfa]" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" className="text-[#5742e3]"  sx={{ flexGrow: 1 }}>Selected Fields</Typography>
           </CardHeader>
-          <CardBody className="ag-theme-alpine" style={{ height: '100%', width: '100%' }}>
+          <CardBody className="ag-theme-alpine text-[#5742e3]"   style={{ height: '100%', width: '100%' }}>
             <AgGridReact
               columnDefs={columnDefs}
               rowData={rowData}

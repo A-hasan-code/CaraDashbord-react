@@ -5,7 +5,7 @@ import {
   InformationCircleIcon,
   Cog6ToothIcon,
   ServerStackIcon,
-  RectangleStackIcon,
+  RectangleStackIcon,PhotoIcon
 } from "@heroicons/react/24/solid";
 import { Home, Profile, Tables, UsersTable, Settings,Gallery } from "@/pages/dashboard";
 import { SignIn } from "@/pages/auth";
@@ -20,7 +20,7 @@ export const routes = [
     layout: "dashboard",
     pages: [
       {
-        icon: <HomeIcon {...icon} />,
+        icon: <PhotoIcon {...icon} />,
         name: "gallery",
         path: "/gallery",
         element:<Gallery />
@@ -39,21 +39,21 @@ export const routes = [
       },
       {
         icon: <TableCellsIcon {...icon} />,
-        name: "Contacts",
+        name: "contacts",
         path: "/tables",
         element: <Tables />,
       },
       {
         icon: <RectangleStackIcon {...icon} />,
-        name: "User",
+        name: "user",
         path: "/users-table",
         element:<UsersTable />,
       }
       ,
       {
         icon: <Cog6ToothIcon {...icon} />,
-        name: "Settings",
-        path: "/Settings",
+        name: "settings",
+        path: "/settings",
         element:<Settings />,
       }
 

@@ -39,7 +39,7 @@ export function Configurator() {
     } else if (selectedFields.length < 5) {
       setSelectedFields(prev => [...prev, { cf_id, cf_name, visible: true }]);
     } else {
-      toast.warning('You can only select up to 8 fields.');
+      toast.warning('You can only select up to 5 fields.');
     }
   };
 
@@ -113,7 +113,7 @@ export function Configurator() {
     <div className="flex">
       <aside className={`fixed top-0 right-0 z-50 h-screen w-96 bg-white shadow-lg transition-transform duration-300 overflow-y-auto ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="mb-6 sticky top-0 z-50 bg-white px-4 py-1">
-          <h2 className="text-xl font-bold mb-4">Customfields Panel</h2>
+          <h2 className="text-xl font-bold mb-4">Custom Fields Panel</h2>
 
           <div>
             <TextField

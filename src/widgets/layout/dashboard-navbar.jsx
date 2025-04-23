@@ -22,19 +22,19 @@ export function DashboardNavbar({ routes }) {
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
   const { logo: imagelogo } = useSelector((state) => state.clientIdsSet);
+  
   const { user, isAuthenticated } = useSelector((state) => state.user);
   const isInIframe = window.self !== window.top;
-useEffect(() => {
-   const hasReloaded = sessionStorage.getItem("iframe-reloaded");
-
+  useEffect(() => {
+    const hasReloaded = sessionStorage.getItem("iframe-reloaded");
     if (isInIframe && !hasReloaded) {
       sessionStorage.setItem("iframe-reloaded", "true");
-      console.log("Reloading iframe app once...");
       window.location.reload();
     }
-},[])
+  }, []);
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false
+  );
 
   useEffect(() => {
     dispatch(getImageSettings());
@@ -58,16 +58,18 @@ useEffect(() => {
 
   const isGalleryPage = page.toLowerCase() === "gallery";
 
-  const filteredRoutes = routes.map((route) => ({
-    ...route,
-    pages: route.pages.filter(
-      (page) =>
-        !(page.name === "sign in" && isAuthenticated) &&
-        !(user?.role === "superadmin" && (page.name === "Contacts" || page.name === "gallery")) &&
-        !(user?.role === "company" && (page.name === "User" || page.name === "gallery"))
-    ),
-  }));
+ const filteredRoutes = routes.map((route) => ({
+  ...route,
+  pages: route.pages.filter(
+    (page) =>
+      page.name !== "profile" &&
+      !(page.name === "sign in" && isAuthenticated) &&
+      !(user?.role === "superadmin" && (page.name === "contacts" || page.name === "gallery")) &&
+      !(user?.role === "company" && (page.name === "user" || page.name === "dashboard"))
+  ),
+}));
 
+console.log("Filtered Routes:", filteredRoutes);
   return (
     <>
       <Navbar color="transparent" className="rounded-xl transition-all sticky top-4 z-40 px-0 py-1" fullWidth>
@@ -75,32 +77,36 @@ useEffect(() => {
 
           {/* Left Side: Logo */}
           {!isInIframe && ( <div className="capitalize flex items-center gap-2">
-            <img
-              src={`https://caradashboard-backend-production.up.railway.app${imagelogo}`}
-              alt="Logo"
-              className="h-20 w-20 object-contain"
-            />
+         <img
+  src={`https://caradashboard-backend-production.up.railway.app${imagelogo}`}
+  alt="Logo"
+  className="h-20 w-20 object-contain"
+  onError={(e) => {
+    e.target.onerror = null; // Prevents infinite loop if fallback also fails
+    e.target.src = "https://storage.googleapis.com/msgsndr/e1rwhC6H3sxPteIfdj8g/media/68081c05a74bb51217b381cb.png";
+  }}
+/>
+
           </div>)}
 
           {/* Right Side: Hamburger Menu & Profile */}
-          <div className="flex items-center gap-6">
-            {/* Hamburger Menu for Mobile 
-            {isInIframe && (
-              <IconButton
-                variant="text"
-                color="blue-gray"
-                className="xl:hidden"
-                onClick={handleDrawerToggle}
-              >
-                {isDrawerOpen ? (
-                  <XMarkIcon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
-                ) : (
-                  <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
-                )}
-              </IconButton>
-            )}*/}
+         
+            Hamburger Menu for Mobile 
+           <div className="flex items-center gap-4">
+            {/* Mobile Hamburger */}
+            <IconButton
+              variant="text"
+              className="md:hidden"
+              onClick={handleDrawerToggle}
+            >
+              {isDrawerOpen ? (
+                <XMarkIcon className="h-6 w-6 text-blue-gray-500" />
+              ) : (
+                <Bars3Icon className="h-6 w-6 text-blue-gray-500" />
+              )}
+            </IconButton>
 
-            {/* Menu for Desktop 
+            {/* Menu for Desktop */}
             <div className="hidden md:flex items-center gap-6">
               {!isGalleryPage && isInIframe && isAuthenticated && (
                 <div className="m-4 flex items-center gap-x-6">
@@ -130,7 +136,7 @@ useEffect(() => {
                   ))}
                 </div>
               )}
-            </div>*/}
+            </div>
 
             {/* User Menu 
             {isInIframe && isAuthenticated && (
@@ -145,34 +151,41 @@ useEffect(() => {
             )}*/}
             {/* For non-iframe or if not authenticated */}
              <div className="hidden md:flex items-center gap-6">
-              {!isGalleryPage && !isInIframe && isAuthenticated && (
-                <div className="m-4 flex items-center gap-x-6">
-                  {filteredRoutes.map(({ layout, title, pages }, key) => (
-                    <div key={key} className="flex items-center space-x-6">
-                      {title && (
-                        <Typography variant="small" className="font-black uppercase opacity-75">
-                          {title}
-                        </Typography>
-                      )}
-                      {pages.map(({ icon, name, path }) => (
-                        <NavLink key={name} to={`/${layout}${path}`}>
-                          {({ isActive }) => (
-                            <Button
-                              variant={isActive ? "gradient" : "text"}
-                              className="flex items-center gap-2 px-4 capitalize"
-                            >
-                              {icon}
-                              <Typography color="inherit" className="font-medium capitalize">
-                                {name}
-                              </Typography>
-                            </Button>
-                          )}
-                        </NavLink>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
+             {!isInIframe && isAuthenticated && (
+              
+  <div className="m-4 flex items-center gap-x-6">
+    
+    {filteredRoutes.map(({ layout, title, pages }, key) => (
+      <div key={key} className="flex items-center space-x-6">
+        {title && (
+          <Typography variant="small" className="text-[#5742e3] font-medium uppercase">
+            {title}
+          </Typography>
+        )}
+        {pages.map(({ icon, name, path }) => (
+          <NavLink key={name} to={`/${layout}${path}`}>
+            {({ isActive }) => (
+              <Button
+                variant="text"
+                className={`flex items-center gap-2 px-4 capitalize transition-colors duration-300 ${
+                  isActive
+                    ? "bg-[#accdfa] text-[#5742e3]"
+                    : "text-[#5e5d67] hover:bg-[#e9eafb]"
+                }`}
+              >
+                {icon}
+                <Typography color="inherit" className="font-medium capitalize">
+                  {name}
+                </Typography>
+              </Button>
+            )}
+          </NavLink>
+        ))}
+      </div>
+    ))}
+  </div>
+)}
+
             </div>
             {!isInIframe && (
             
@@ -195,6 +208,10 @@ useEffect(() => {
                         src={`https://caradashboard-backend-production.up.railway.app/${user?.image}`}
                         alt="User Avatar"
                         className="cursor-pointer"
+                         onError={(e) => {
+    e.target.onerror = null; // Prevents infinite loop if fallback also fails
+    e.target.src = "https://missysue.com/wp-content/uploads/2019/08/half-up-dutch-braids-2.jpg";
+  }}
                       />
                     </MenuHandler>
                     <MenuList>
@@ -219,38 +236,33 @@ useEffect(() => {
       </Navbar>
 
       {/* Mobile Drawer */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
-          <div className="absolute top-0 right-0 p-6 bg-white w-64 h-full shadow-xl">
-            <IconButton
-              variant="text"
-              color="blue-gray"
-              onClick={handleDrawerToggle} // Close drawer when X is clicked
-              className="absolute top-0 right-0"
-            >
-              <XMarkIcon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
-            </IconButton>
-            <div className="p-4">
-              {filteredRoutes.map(({ layout, title, pages }, key) => (
-                <div key={key}>
-                  {title && (
-                    <Typography variant="small" className="font-black uppercase opacity-75">
-                      {title}
-                    </Typography>
-                  )}
-                  {pages.map(({ icon, name, path }) => (
-                    <NavLink key={name} to={`/${layout}${path}`} onClick={() => setIsDrawerOpen(false)}>
-                      <Button variant="text" className="w-full capitalize py-2 flex items-center gap-4">
-                        {icon}
-                        <Typography color="inherit" className="font-medium capitalize">
-                          {name}
-                        </Typography>
-                      </Button>
-                    </NavLink>
-                  ))}
-                </div>
-              ))}
+     {isDrawerOpen && !isInIframe && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 z-50 md:hidden">
+          <div className="absolute top-0 right-0 w-64 h-full bg-white shadow-lg p-4">
+            <div className="flex justify-end mb-4">
+              <IconButton variant="text" onClick={handleDrawerToggle}>
+                <XMarkIcon className="h-6 w-6 text-gray-700" />
+              </IconButton>
             </div>
+            {filteredRoutes.map(({ layout, title, pages }, key) => (
+              <div key={key} className="mb-4">
+                {title && (
+                  <Typography variant="small" className="font-black uppercase opacity-75 mb-2">
+                    {title}
+                  </Typography>
+                )}
+                {pages.map(({ icon, name, path }) => (
+                  <NavLink key={name} to={`/${layout}${path}`} onClick={() => setIsDrawerOpen(false)}>
+                    <Button variant="text" className="w-full justify-start py-2 flex items-center gap-3">
+                      {icon}
+                      <Typography color="inherit" className="font-medium capitalize">
+                        {name}
+                      </Typography>
+                    </Button>
+                  </NavLink>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       )}

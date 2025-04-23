@@ -11,7 +11,7 @@ export function Tables() {
   
   // Getting the contacts state from Redux store
   const { contacts, loading, error } = useSelector((state) => state.contacts);
-
+console.log("contacts", error)
   // Fetch contacts on component mount
   useEffect(() => {
     dispatch(fetchContacts());
@@ -40,8 +40,8 @@ export function Tables() {
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
+        <CardHeader   className="mb-8 p-6 bg-[#accdfa] ">
+          <Typography variant="h6" className="text-[#5742e3] font-bold">
             Contacts Table
           </Typography>
         </CardHeader>
@@ -52,7 +52,7 @@ export function Tables() {
               <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
             </div>
           ) : error ? (
-            <div className="text-red-500 text-center">{error}</div>
+            <div className="text-[#5742e3] text-center font-semibold text-base">No Data found</div>
           ) : (
             <div className="ag-theme-material" style={{ height: 'fit-content', maxWidth: "100%" }}>
               <AgGridReact

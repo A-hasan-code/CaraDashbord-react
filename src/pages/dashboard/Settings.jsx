@@ -171,12 +171,13 @@ export const Settings = () => {
 
                         {/* Show Save Button only when editing */}
                         {isEditing && (
-                            <div
-                                className="bg-black text-white text-center max-h-12 p-4 rounded-md cursor-pointer hover:bg-gray-700 transition-all duration-300"
-                                onClick={handleSave}
-                            >
-                                Save Settings
-                            </div>
+                           <div
+  onClick={handleSave}
+  className="bg-[#e9eafb] text-[#5742e3] text-center max-h-12 p-3 rounded-md cursor-pointer hover:bg-[#5742e3] hover:text-white transition-all duration-300 border border-[#d9d9d9] font-medium"
+>
+  Save Settings
+</div>
+
                         )}
                     </CardContent>
                 </Card>)}
@@ -189,10 +190,14 @@ export const Settings = () => {
                             alt="GoHighLevel"
                             className="mx-auto mb-4"
                         />
-                        <div className="bg-black text-white p-4 rounded-lg cursor-pointer flex items-center justify-center space-x-2 w-full hover:bg-gray-700 transition-all duration-300"   onClick={handleButtonClick}>
-                            <FaLink size={20} />
-                            <span>Connect</span>
-                        </div>
+                     <div
+  onClick={handleButtonClick}
+  className="bg-[#e9eafb] text-[#5742e3] p-3 rounded-lg cursor-pointer flex items-center justify-center space-x-2 w-full hover:bg-[#5742e3] hover:text-white transition-all duration-300 border border-[#d9d9d9] font-medium"
+>
+  <FaLink size={20} />
+  <span>Connect</span>
+</div>
+
                     </CardContent>
                 </Card>)}
 
@@ -204,17 +209,22 @@ export const Settings = () => {
         {/* Display logo from Redux state or preview   `https://caradashboard-backend-production.up.railway.app${imagelogo}` */}
         {imagelogo || imagePreview ? (
             <div className="relative">
-                <img
-                    src={`https://caradashboard-backend-production.up.railway.app${imagelogo}` || imagePreview}  // Use Redux logo or the imagePreview state
-                    alt="Logo Preview"
-                    className="w-[100%] h-48 object-contain mx-auto mb-4 rounded-lg"
-                />
-                <button
+               <img
+  src={`https://caradashboard-backend-production.up.railway.app${imagelogo}`}
+  onError={(e) => {
+    e.target.onerror = null; // prevent looping
+    e.target.src = imagePreview || 'https://storage.googleapis.com/msgsndr/e1rwhC6H3sxPteIfdj8g/media/68081c05a74bb51217b381cb.png'; // fallback to default logo or preview
+  }}
+  alt="Logo Preview"
+  className="w-[100%] h-48 object-contain mx-auto mb-4 rounded-lg"
+/>
+
+                {/* <button
                     onClick={handleRemoveLogo}
                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                 >
                     X
-                </button>
+                </button> */}
             </div>
         ) : (
             <div className="w-48 h-48 border border-dashed border-gray-400 mb-4 flex justify-center items-center text-gray-400 rounded-lg">
@@ -223,13 +233,15 @@ export const Settings = () => {
         )}
 
         {/* Upload Logo Button */}
-        <div
-            onClick={triggerFileInput}
-            className="bg-black text-white p-3 rounded-lg cursor-pointer flex items-center justify-center space-x-2 w-full hover:bg-gray-800 transition-all duration-300"
-        >
-            <FaCloudUploadAlt size={30} />
-            <span>Upload Logo</span>
-        </div>
+<div
+  onClick={triggerFileInput}
+  className="bg-[#e9eafb] text-[#5742e3] p-3 rounded-lg cursor-pointer flex items-center justify-center space-x-2 w-full hover:bg-[#5742e3] hover:text-white transition-all duration-300 border border-[#d9d9d9] font-medium"
+>
+  <FaCloudUploadAlt size={30} />
+  <span>Upload Logo</span>
+</div>
+
+
 
         {/* Hidden file input */}
         <input
@@ -243,7 +255,7 @@ export const Settings = () => {
 </Card>
 
             </div>
-            {/* {user?.role === 'company' && ( <CustomFieldsSelection />)} */}
+            {user?.role === 'company' && ( <CustomFieldsSelection />)}
         </div>
     );
 };

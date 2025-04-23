@@ -19,7 +19,7 @@ import { BiDotsVerticalRounded } from "react-icons/bi";
 import SelectComponent from "@/constant/Select/Select";
 import { useGallery } from "@/Redux/hooks/usegallery";
 import { useDispatch, useSelector } from 'react-redux';
-import { getGallery,setPage,setSortName, setSortDate,setLimit } from '@/Redux/slices/Gallery.slice'
+import { getGallery,setPage,setSortName, setSortDate,setLimit ,setStartDate, setEndDate  } from '@/Redux/slices/Gallery.slice'
 ;
 import { getSearchSuggestions } from "@/Api/contactapi";
 
@@ -36,6 +36,7 @@ import { GiEmptyHourglass } from "react-icons/gi";
 import { LuSettings, LuFileText } from "react-icons/lu";
 import { BiSort,BiSolidSortAlt } from "react-icons/bi";
 import { SlCalender } from "react-icons/sl";
+import { FaTimes } from "react-icons/fa";
 const customStyles = {
   control: (provided, state) => ({
     ...provided,
@@ -90,7 +91,7 @@ export function Gallery() {
  
 
   const dispatch = useDispatch();
-  const {  loading, error, page, limit, totalContacts,sortName, sortDate } = useSelector((state) => state.gallery);
+  const {  loading, error, page, limit, totalContacts,sortName, sortDate,startDate, endDate } = useSelector((state) => state.gallery);
  const { gallery, isLoading } = useGallery({
     page,
     limit,
@@ -100,8 +101,7 @@ export function Gallery() {
   });
   console.log('galleryData', gallery);
     const [tags, setTags] = useState('');
-    const [startDate, setStartDate] = useState('');
-     const [endDate, setEndDate] = useState('');
+   
   const [Loading, setLoading] = useState(false);
 const settingsRef = useRef(null); 
 
@@ -128,13 +128,14 @@ const [atags, setaTags] = useState('');
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
  const { cover: imagelogo } = useSelector((state) => state.clientIdsSet);
-    const [selectedDateRange, setSelectedDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
+    const [selectedDateRange, setSelectedDateRange] = useState({ startDate: null, endDate: null });
+
   const [activeSort, setActiveSort] = useState("");
 
-    const [sortBy, setSortBy] = useState(""); // "name" or "date"
+//gallerypreview
+  const [previewImage, setPreviewImage] = useState(null);
+  const openPreview = (url) => setPreviewImage(url);
+  const closePreview = () => setPreviewImage(null);
   const [calendarVisible, setCalendarVisible] = useState(false);
     const [isConfiguratorOpen, setIsConfiguratorOpen] = useState(false);
 
@@ -257,16 +258,16 @@ const handleInputChange = (value) => {
   const handleMultiSelectChange = (selected) => {
     setSelectedOptions(selected || []); // Set selected options (multi-select)
   };
-useEffect(() => {
-  if (selectedOptions.length === 0 && inputValue === '') {
+// useEffect(() => {
+//   if (selectedOptions.length === 0 && inputValue === '') {
     
-    setIsFiltered(false); // Reset the filter state
-    setOptions([]); // Clear options list
-    dispatch(getGallery({ page, limit ,tags,sortName, sortDate}))
-    ; // Fetch the gallery without filters
+//     setIsFiltered(false); // Reset the filter state
+//     setOptions([]); // Clear options list
+//     dispatch(getGallery({ page, limit ,tags,sortName, sortDate}))
+//     ; // Fetch the gallery without filters
     
-  }
-}, [selectedOptions, inputValue, dispatch, page, tags, limit,sortName, sortDate]);
+//   }
+// }, [selectedOptions, inputValue, dispatch, page, tags, limit,sortName, sortDate]);
   // Fetch search suggestions based on inputValue
   useEffect(() => {
     const fetchData = async () => {
@@ -383,16 +384,16 @@ useEffect(() => {
     };
   }, []);
 
-useEffect(() => {
-  // Fetch data again whenever specific filters change
-  dispatch(getGallery({ 
-    page, 
-    limit, 
-    tags: atags, 
-    sortName, 
-    sortDate 
-  }));
-}, [dispatch, page, limit, atags, sortName, sortDate]); // Trigger on changes in filters or other conditions
+// useEffect(() => {
+//   // Fetch data again whenever specific filters change
+//   dispatch(getGallery({ 
+//     page, 
+//     limit, 
+//     tags: atags, 
+//     sortName, 
+//     sortDate 
+//   }));
+// }, [dispatch, page, limit, atags, sortName, sortDate]); // Trigger on changes in filters or other conditions
 
  const getGridColumns = () => {
   switch (cardSize) {
@@ -467,7 +468,8 @@ const getTimeSize = () => {
 
     const handlePageChange = (newPage) => {
     dispatch(setPage(newPage));
-    dispatch(getGallery({ page: newPage, limit, tags: atags, sortName, sortDate }));
+    dispatch(getGallery({ page: newPage, limit, tags: atags, sortName, sortDate,startDate,
+    endDate  }));
     window.scrollTo(0, 0);
   };
 
@@ -475,7 +477,8 @@ const getTimeSize = () => {
     const newLimit = Number(e.target.value);
     dispatch(setLimit(newLimit));
     dispatch(setPage(1));
-    dispatch(getGallery({ page: 1, limit: newLimit, tags: atags, sortName, sortDate }));
+    dispatch(getGallery({ page: 1, limit: newLimit, tags: atags, sortName, sortDate,startDate,
+    endDate  }));
     window.scrollTo(0, 0);
   };
 
@@ -495,57 +498,86 @@ const getTimeSize = () => {
       setIsFiltered(true);
       const selectedTags = selectedOptions.map(option => option.label).join(',');
       setaTags(selectedTags);
-      dispatch(getGallery({ page: 1,  tags: selectedTags,sortName, sortDate }));
+      dispatch(getGallery({ page: 1,  tags: selectedTags,sortName, sortDate,  startDate,
+    endDate }));
     }
-  };
+  };console.log(selectedDateRange)
     const handleSortByName = (order) => {
       setActiveSort(`name-${order}`);
 // console.log("Sorting by name in order:", order); 
+console.log("Sorting by name in order:", order);
  dispatch(getGallery({ 
     page, 
     limit, 
     tags:atags,
     sortName: order, 
-    sortDate 
+    sortDate ,
+      startDate,
+    endDate
+    
   }));
  };
 
   const handleSortByDate = (order) => {
   //  console.log("Sorting by date in order:", atags);
    setActiveSort(`date-${order}`);
-     dispatch(getGallery({ page, limit ,tags:atags,sortName, sortDate:order}))
+     dispatch(getGallery({ page, limit ,tags:atags,sortName,sortDate:order, startDate,
+    endDate}))
    
   };
-   const handleDateRangeChange = (range) => {
-    
-     setIsFiltered(true); // Debugging line
-    setSelectedDateRange({
-      startDate: range.startDate,
-      endDate: range.endDate,
-    });
-  };
-  const handleClearFilters = () => {
-    setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
-    setSelectedOptions([]);
-    setInputValue('');
-    dispatch(getGallery({ page, limit }));
-    setIsFiltered(false);
-     setOptions([]);
-  };
+ const handleDateRangeChange = (range) => {
+  setIsFiltered(true);
+  const start = range.startDate;
+  const end = range.endDate;
+
+  dispatch(setPage(1)); // Reset to first page
+  dispatch(setStartDate(start));
+  dispatch(setEndDate(end));
+  dispatch(getGallery({
+    page: 1,
+    limit,
+    tags: atags,
+    sortName,
+    sortDate,
+    startDate: start,
+    endDate: end,
+  }));
+};
+
+
+ const handleClearFilters = () => {
+  setDateRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+  setSelectedOptions([]);
+  setInputValue('');
+  dispatch(setStartDate(null));
+  dispatch(setEndDate(null));
+  dispatch(setSortName(''));
+  dispatch(setSortDate(''));
+  dispatch(getGallery({ page, limit }));
+  setIsFiltered(false);
+  setOptions([]);
+};
+
 
 
 
 
 
   const Loader = () => (
-    <div className="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 z-10">
-      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
-    </div>
+   <div className="flex flex-col justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 z-10">
+  {/* Spinner */}
+  <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin mb-4"></div>
+
+  {/* Loading Text */}
+  <div className="text-[#5742e3] font-medium text-lg">Loading fresh data ...</div>
+</div>
+
 );
             const imageSrca = imagelogo 
   ? `https://caradashboard-backend-production.up.railway.app${imagelogo}` 
   : 'https://storage.googleapis.com/msgsndr/8gm7q9rR8M1dcm9kMsiq/media/67e32fef1870f408b83d0d0d.png';
-  return (<>
+  return (<div >
+
   {user?.role==='superadmin' &&(
     <div className="mt-1 flex justify-center ">
   <h1 className="text-3xl font-bold ">Welcome to Admin Panel</h1>
@@ -621,7 +653,7 @@ const getTimeSize = () => {
 
     {/* Sort by Project Date */}
     <div
-      onClick={() => handleSortByDate("desc")}
+      onClick={() => handleSortByDate("asc")}
       className={`cursor-pointer py-2 pl-4 pr-2 rounded-md flex items-center hover:bg-[#e9eafb] ${
         activeSort === "date-asc" ? "bg-[#e9eafb]" : ""
       }`}
@@ -631,7 +663,7 @@ const getTimeSize = () => {
     </div>
 
     <div
-      onClick={() => handleSortByDate("asc")}
+      onClick={() => handleSortByDate("desc")}
       className={`cursor-pointer py-2 pl-4 pr-2 rounded-md flex items-center hover:bg-[#e9eafb] ${
         activeSort === "date-desc" ? "bg-[#e9eafb]" : ""
       }`}
@@ -648,7 +680,7 @@ const getTimeSize = () => {
 
     {/* Sort by Client Name */}
     <div
-      onClick={() => handleSortByName("desc")}
+      onClick={() => handleSortByName("asc")}
       className={`cursor-pointer py-2 pl-4 pr-2 rounded-md flex items-center hover:bg-[#e9eafb] ${
         activeSort === "name-asc" ? "bg-[#e9eafb]" : ""
       }`}
@@ -658,7 +690,7 @@ const getTimeSize = () => {
     </div>
 
     <div
-      onClick={() => handleSortByName("asc")}
+      onClick={() => handleSortByName("desc")}
       className={`cursor-pointer py-2 pl-4 pr-2 rounded-md flex items-center hover:bg-[#e9eafb] ${
         activeSort === "name-desc" ? "bg-[#e9eafb]" : ""
       }`}
@@ -841,8 +873,8 @@ const location=project?.basicContactData?.location_id
   key={project?.basicContactData?.id}
   className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white border border-[#d9d9d9] hover:shadow-2xl transition duration-300 ${
     cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""
-  } flex flex-col h-fit`}
-  onClick={() => handleCardClick(contactId, location)}
+  } flex flex-col h-fit cursor-pointer`}
+ 
 >
   {/* Top Section: 65% height */}
   <div className="relative flex-shrink-0 h-[65%] overflow-hidden">
@@ -918,7 +950,7 @@ const location=project?.basicContactData?.location_id
   </div>
 
   {/* Bottom Section: 35% height */}
-  <CardBody className="p-2 flex-grow flex-col justify-between h-[35%] overflow-hodden">
+  <CardBody className="p-2 flex-grow flex-col justify-between h-[35%] overflow-hodden"  onClick={() => handleCardClick(contactId, location)}>
     <div className="flex flex-col flex-1 ">
       <Typography
         variant="h1"
@@ -936,7 +968,7 @@ const location=project?.basicContactData?.location_id
       </div>
 
       <div className={`flex justify-center items-center ${getTextSize()} text-gray-600 mb-1`}>
-        <Tooltip title={project?.basicContactData?.location_id}>
+        <Tooltip title={project?.basicContactData?.address }>
           <Typography variant="body2" className={`truncate font-medium text-${labelTextSize()}`}>
             {project?.basicContactData?.address || "No Address"}
           </Typography>
@@ -947,8 +979,8 @@ const location=project?.basicContactData?.location_id
       {project?.customCustomFields.map((field, index) => (
         <div key={index} className={`mb-1 flex items-start gap-x-2 ${labelTextSize()}`}>
           <Tooltip title={field.label} arrow>
-            <div className="text-black font-medium truncate w-[45%] overflow-hidden">
-              <Typography variant="body2" className={`truncate font-medium text-${labelTextSize()} linesettings`}>
+            <div className="text-black font-normal truncate w-[45%] overflow-hidden">
+              <Typography variant="body2" className={`truncate font-normal text-${labelTextSize()} linesettings`}>
                 {field?.value?.includes("http") ? "CustomField" : field?.label}:
               </Typography>
             </div>
@@ -972,17 +1004,50 @@ const location=project?.basicContactData?.location_id
         
         </div>
       ))}
-     <div className="flex flex-wrap mt-1 relative min-h-[25px]">
-            {project.relatedImages.slice(0, 10).map((imageUrl, index) => (
-              <div key={index} className="flex items-center  space-x-2 group relative">
-                <img
-                  src={imageUrl}
-                  alt={`Related Image ${index + 1}`}
-                  className="border-2 border-gray-300 rounded-md w-3 h-6 object-cover transition-all duration-300 transform group-hover:scale-110"
-                />
-              </div>
-            ))}
+     <div className="flex flex-wrap mt-1 relative min-h-[25px] ">
+         {project.relatedImages.slice(0, 10).map((imageUrl, index) => (
+          <div
+            key={index}
+            className="flex items-center space-x-2 group relative cursor-pointer"
+           
+          >
+      
+            <img
+              src={imageUrl}
+              alt={`Related Image ${index + 1}`}
+              className="border-2 border-gray-300 rounded-md w-[15.5px] h-6 object-cover transition-transform duration-300 transform group-hover:scale-110"
+            />
           </div>
+        ))}
+      </div>
+
+      {/* Fancy Modal Preview */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/10 backdrop-blur-md  bg-opacity-70 flex items-center justify-center  transition-opacity duration-300"
+          onClick={closePreview}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-2xl w-[90%] scale-95 animate-zoomIn"
+          >
+            {/* Close Button */}
+            <button
+              onClick={closePreview}
+              className="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform duration-300"
+            >
+              <FaTimes className="text-[#5742e3]" />
+            </button>
+
+            {/* Image */}
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="rounded-xl border border-[#d9d9d9] shadow-2xl w-full"
+            />
+          </div>
+        </div>
+      )}
         </div>
       </CardBody>
 </Card>
@@ -991,53 +1056,85 @@ const location=project?.basicContactData?.location_id
     })}
   </div>
 
-   {/* Pagination */}
-      <div className="flex justify-center items-center mt-6">
+ 
+
+
+
+
+       
+ </>
+) : (
+    <div className="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 ">
+      {loading && <Loader />}  
+        </div>
+
+)}   </div> 
+  )}
+  <></>
+     {gallery && gallery.length > 0 && (
+          <footer className="mt-9 py-2">
+             
+          
+            {/* Pagination */}
+      <div className="flex justify-center items-center">
   <Button
     onClick={() => handlePageChange(page - 1)}
     disabled={page === 1}
-    className="bg-[#accdfa] hover:bg-[#5742e3] text-white px-4 py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+    className="bg-[#accdfa] hover:bg-[#5742e3] text-white px-4 py-2 rounded-full disabled:opacity-90 disabled:cursor-not-allowed"
   >
     Previous
   </Button>
 
-  <Typography className="mx-4">Page {page} of {Math.ceil(totalContacts / limit)}</Typography>
+  <Typography className="mx-4">Page {page} of {limit > 0 ? Math.ceil(totalContacts / limit) : 1}</Typography>
 
   <Button
     onClick={() => handlePageChange(page + 1)}
     disabled={page * limit >= totalContacts}
-    className="bg-[#accdfa] hover:bg-[#5742e3] text-white px-4 py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+    className="bg-[#accdfa] hover:bg-[#5742e3] text-white px-4 py-2 rounded-full disabled:opacity-90 disabled:cursor-not-allowed"
   >
     Next
   </Button>
 </div>
- <div className="flex items-center justify-end mt-4 space-x-2">
-            <label htmlFor="limit" className="text-sm font-medium text-gray-700">Items per page:</label>
-            <select
-              id="limit"
-              value={limit}
-              onChange={handleLimitChange}
-              className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value={48}>48</option>
-              <option value={72}>72</option>
-              <option value={0}>Show All</option>
-            </select>
-          </div>
-</>
-) : (
-    <div className="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 ">
-         <GrInbox size={100} />    
-        </div>
+ <div className="flex justify-between items-center mt-4">
+  {/* Left Side */}
+  <div className="flex items-center space-x-2">
+     <label
+    htmlFor="limit-left"
+    className="text-sm font-medium text-gray-700"
+  >
+    Total Contacts:
+  </label>
+  <span className="text-sm text-gray-900 px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    {totalContacts}
+  </span>
 
-)}
+  </div>
+
+  {/* Right Side */}
+  <div className="flex items-center space-x-2">
+    <label
+      htmlFor="limit-right"
+      className="text-sm font-medium text-gray-700"
+    >
+      Items per page:
+    </label>
+    <select
+      id="limit-right"
+      value={limit}
+      onChange={handleLimitChange}
+      className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value={48}>48</option>
+      <option value={72}>72</option>
+      <option value={0}>Show All</option>
+    </select>
+  </div>
+</div>
 
 
-
-        <div className=" flex justify-center ">
-</div> 
-     
-    </div >)}</>
+          </footer>
+        )} 
+  </div>
   );
 }
 

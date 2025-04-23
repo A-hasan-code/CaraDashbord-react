@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Axios from '@/Api/Axios'; // Ensure Axios is correctly set up
 
-// Regular fetch with loading
+// Async thunk to fetch gallery data
 export const getGallery = createAsyncThunk(
     'gallery/getGallery',
     async ({ page = 1, limit = 16, tags = '', startDate, endDate, sortName, sortDate }, { rejectWithValue }) => {
@@ -11,7 +11,6 @@ export const getGallery = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
-            // Return error message if response is not available
             return rejectWithValue(error.response ? error.response.data : error.message);
         }
     }
@@ -24,8 +23,10 @@ const initialState = {
     page: 1,
     limit: 48,
     totalContacts: 0,
-    sortName: 'asc',
-    sortDate: 'asc',
+    sortName: '',
+    sortDate: '',
+    startDate: null,
+    endDate: null,
 };
 
 const gallerySlice = createSlice({
@@ -44,6 +45,12 @@ const gallerySlice = createSlice({
         setSortDate: (state, action) => {
             state.sortDate = action.payload;
         },
+        setStartDate: (state, action) => {
+            state.startDate = action.payload;
+        },
+        setEndDate: (state, action) => {
+            state.endDate = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -52,8 +59,8 @@ const gallerySlice = createSlice({
             })
             .addCase(getGallery.fulfilled, (state, action) => {
                 state.loading = false;
-                state.gallery = action.payload.contacts;  // Ensure correct property name from the API response
-                state.totalContacts = action.payload.totalContacts;  // Ensure the `totalContacts` is coming as expected from the API
+                state.gallery = action.payload.contacts;
+                state.totalContacts = action.payload.totalContacts;
             })
             .addCase(getGallery.rejected, (state, action) => {
                 state.loading = false;
@@ -62,5 +69,13 @@ const gallerySlice = createSlice({
     },
 });
 
-export const { setPage, setLimit, setSortName, setSortDate } = gallerySlice.actions;
+export const {
+    setPage,
+    setLimit,
+    setSortName,
+    setSortDate,
+    setStartDate,
+    setEndDate
+} = gallerySlice.actions;
+
 export default gallerySlice.reducer;

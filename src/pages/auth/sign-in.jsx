@@ -1,193 +1,124 @@
 import React, { useState, useEffect } from "react";
 import { Card, Input, Button, Typography } from "@material-tailwind/react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Link } from 'react-router-dom'; 
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-// Redux imports
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '@/Redux/slices/User.Slice'; 
+import { login } from '@/Redux/slices/User.Slice';
 import Axios from '@/Api/Axios';
 
 export function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(true); // Initially loading
-  const [isIframe, setIsIframe] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false); // Track auto-authentication status
+  
 
-  // Redux state and dispatch
+
   const dispatch = useDispatch();
   const { error, isAuthenticated } = useSelector((state) => state.user);
   const navigate = useNavigate();
-  
-  // Use useLocation to access the query parameters (location and token)
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const locationId = params.get('location');
-  const token = params.get('token');
+  console.log("isAuthenticated", error, isAuthenticated)
 
-  console.log('Location ID:', locationId);
-  console.log('Token:', token);
-
-  // Function to check if the page is in an iframe
-  const checkIfIframe = () => {
-    if (window.self !== window.top) {
-      setIsIframe(true); 
-    } else {
-      setIsIframe(false); 
-    }
-  };
-
-  // Handle automatic authentication if iframe is detected
-  const autoAuth = async () => {
-    if (!locationId || !token) {
-      toast.error("Location and token are required.");
-      setLoading(false);
-      setIsAuthenticating(false); // End authentication process
-      return;
-    }
-
-    try {
-      setIsAuthenticating(true); // Start auto-authentication
-      const response = await Axios.get(`/auth/connect?location=${locationId}&token=${token}`);
-
-      if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        sessionStorage.setItem("showToast", "true");
-        toast.success("Authenticated successfully!");
-        setLoading(false);
-        navigate("/dashboard/gallery"); 
-         window.location.reload();
-      } else {
-        toast.error("Authentication failed.");
-        setLoading(false);
-        setIsAuthenticating(false); // End authentication process
-      }
-   
-    } catch (error) {
-      console.error("Authentication Error:", error);
-      toast.error("Error during authentication.");
-      setLoading(false);
-      setIsAuthenticating(false); // End authentication process
-    }
-  };
-  
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    if (!email) {
-      toast.error("Email is required.");
-      return;
-    }
-
-    if (!password) {
-      toast.error("Password is required.");
-      return;
-    }
-
+    if (!email) return toast.error("Email is required.");
+    if (!password) return toast.error("Password is required.");
     try {
       const resultAction = await dispatch(login({ email, password }));
-
       if (login.fulfilled.match(resultAction)) {
         toast.success("Successfully signed in!");
-        navigate("/dashboard/gallery"); 
-      } else {
-        toast.error(resultAction.payload || "Login failed.");
+       if (resultAction.payload?.user?.role === "superadmin") {
+    navigate("/dashboard/home");
+  } else if (resultAction.payload?.user?.role === "company") {
+    navigate("/dashboard/gallery");
+  } else {
+    navigate("/dashboard/home"); // default fallback
+  }
+      }else{
+        toast.error(error);
       }
     } catch (error) {
-      console.log(error)
+
+      console.error("Login Error:", error);
       toast.error(error.message || "Login failed.");
     }
+    
   };
 
-  useEffect(() => {
-    checkIfIframe();
-    if (isIframe ) {
-      
-      autoAuth(); // Trigger the automatic authentication if iframe detected
-    } else {
-      setLoading(false); // Allow sign-in form to render if not in iframe
-      setIsAuthenticating(false); // End authentication process when not in iframe
-    }
-  }, [isIframe, locationId, token]);
-
-  if (loading || isAuthenticating) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="spinner-border animate-spin border-4 rounded-full w-16 h-16 border-t-transparent"></div>
-      </div>
-    );  
-  }
+ 
 
   return (
-    <section className="m-8 flex gap-4">
-      <ToastContainer />
-      <div className="w-full lg:w-3/5 mt-24">
+    <section className="m-4 flex flex-col lg:flex-row gap-4 justify-center items-center  ">
+
+      <div className="w-full lg:w-3/5 mt-12 lg:mt-24 px-4">
+        
         <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
+          <Typography variant="h2" className="font-medium text-[2rem] text-[#5742e3] mb-4">
+            Sign In
+          </Typography>
+          <Typography variant="paragraph" color="blue-gray" className="text-base font-medium">
             Enter your email and password to Sign In.
           </Typography>
         </div>
-        <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2" onSubmit={handleSubmit}>
-          <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Your email
-            </Typography>
-            <Input
-              size="lg"
-              placeholder="name@mail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
-            />
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Password
-            </Typography>
-            <div className="relative">
+        <form onSubmit={handleSubmit} className="mt-8 mx-auto w-full max-w-md">
+          <div className="mb-6 flex flex-col gap-6">
+            <div>
+              <Typography variant="small" className="mb-1 font-medium text-[#5742e3]">
+                Your email
+              </Typography>
               <Input
-                type={showPassword ? "text" : "password"}
                 size="lg"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                labelProps={{
-                  className: "before:content-none after:content-none",
-                }}
+                placeholder="name@mail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="focus:!border-[#5742e3] border border-[#d9d9d9]"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2"
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
+            </div>
+            <div>
+              <Typography variant="small" className="mb-1 font-medium text-[#5742e3]">
+                Password
+              </Typography>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  size="lg"
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="focus:!border-[#5742e3] border border-[#d9d9d9]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[#5742e3]"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex justify-end cursor-pointer mt-3">
-            <Link to="/forgot-password">
-              <Typography variant="small" color="blue-gray" className="font-medium">
-                Forgot password?
-              </Typography>
+          <div className="flex justify-end mb-4">
+            <Link to="/forgot-password" className="text-sm text-[#5742e3] font-medium">
+              Forgot password?
             </Link>
           </div>
-          <Button className="mt-3" type="submit" fullWidth>
+          <Button
+            type="submit"
+            fullWidth
+            className="bg-[#e9eafb] text-[#5742e3] hover:bg-[#accdfa] transition-colors"
+          >
             Sign In
           </Button>
-          {error && <Typography className="text-red-500">{error.message}</Typography>} 
+          {error && <Typography className="text-red-500 text-sm mt-2">{error}</Typography>}
         </form>
       </div>
-      <div className="w-2/5 h-full hidden lg:block">
+      <div className="w-[70%] lg:w-[33%]  hidden lg:block">
         <img
           src="/img/pattern.png"
-          className="h-full w-full object-cover rounded-3xl"
+          className=" w-full object-cover rounded-3xl"
+          alt="Background"
         />
+     
       </div>
     </section>
   );

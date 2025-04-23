@@ -9,7 +9,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { useNavigate } from 'react-router-dom';
 import ModalComponent from '@/constant/Modal/ModalComponent';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllUsers, updateUserSuperadmin, deleteUserSuperadmin ,register} from '@/Redux/slices/User.Slice'; 
+import { fetchAllUsers, updateUserSuperadmin, deleteUserSuperadmin ,register } from '@/Redux/slices/User.Slice'; 
 import CircularProgress from '@mui/material/CircularProgress'; 
 
 export const UsersTable = () => {
@@ -43,7 +43,8 @@ export const UsersTable = () => {
     email: user?.email,
     role: user?.role,
     status: user?.status,
-    location_id: user?.location_id
+    location_id: user?.location_id,
+    password: user?.password
   }));
 
   const handleCreateUser = () => {
@@ -54,11 +55,12 @@ export const UsersTable = () => {
   const handleEditUser = (user) => {
     setUserId(user?.id);
     setUserData({
-     name: user?.name,
+      name: user?.name,
       email: user?.email,
       role: user?.role,
       status: user?.status,
-      location_id: user?.location_id
+      location_id: user?.location_id,
+  
     });
     setIsEditMode(true);
     setOpen(true);
@@ -69,28 +71,26 @@ export const UsersTable = () => {
     setDeleteConfirmOpen(true); 
   };
 
-const confirmDelete = () => {
-  if (userId) {
-    
-    dispatch(deleteUserSuperadmin(userId))
-      .then(() => {
-        toast.success('User deleted successfully!');
-        setDeleteConfirmOpen(false);
-        dispatch(fetchAllUsers()); 
-      })
-      .catch((error) => {
-        toast.error(error?.message || 'Error while deleting user');
-        setDeleteConfirmOpen(false);
-        dispatch(fetchAllUsers()); 
-      });
-  }
-};
-
+  const confirmDelete = () => {
+    if (userId) {
+      dispatch(deleteUserSuperadmin(userId))
+        .then(() => {
+          toast.success('User deleted successfully!');
+          setDeleteConfirmOpen(false);
+          dispatch(fetchAllUsers()); 
+        })
+        .catch((error) => {
+          toast.error(error?.message || 'Error while deleting user');
+          setDeleteConfirmOpen(false);
+          dispatch(fetchAllUsers()); 
+        });
+    }
+  };
 
   const handleClose = () => {
     setOpen(false);
     setUserData({
-     name: '',
+      name: '',
       email: '',
       role: '',
       status: '',
@@ -99,38 +99,32 @@ const confirmDelete = () => {
     setIsEditMode(false);
   };
 
-
-
-const handleSubmit = async () => {
-  try {
-    if (isEditMode) {
-      // Update user
-      const resultAction = await dispatch(updateUserSuperadmin({ userId, updatedData: userData }));
-      if (updateUserSuperadmin.fulfilled.match(resultAction)) {
-        toast.success('User updated successfully!');
-        dispatch(fetchAllUsers());  
+  const handleSubmit = async () => {
+    try {
+      if (isEditMode) {
+        const resultAction = await dispatch(updateUserSuperadmin({ userId, updatedData: userData }));
+        if (updateUserSuperadmin.fulfilled.match(resultAction)) {
+          toast.success('User updated successfully!');
+          dispatch(fetchAllUsers());  
+        } else {
+          toast.error('Update failed!');
+        }
       } else {
-        toast.error('Update failed!');
+        const resultAction = await dispatch(register(userData));
+        if (register.fulfilled.match(resultAction)) {
+          toast.success('User registered successfully!');
+          dispatch(fetchAllUsers());  
+        } else {
+          toast.error('Registration failed!');
+        }
       }
-    } else {
-      //Create new user
-      const resultAction = await dispatch(register(userData));
-      if (register.fulfilled.match(resultAction)) {
-        toast.success('User registered successfully!');
-        dispatch(fetchAllUsers());  
-      } else {
-        toast.error('Registration failed!');
-      }
+    } catch (error) {
+      toast.error('Error during submission!');
+      console.error('Error during submit:', error);
+    } finally {
+      handleClose();
     }
-  } catch (error) {
-    toast.error('Error during submission!');
-    console.error('Error during submit:', error);
-  } finally {
-    handleClose();
-  }
-};
-
-
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -138,57 +132,63 @@ const handleSubmit = async () => {
   };
 
   const columnDefs = [
-    { headerName: "ID", field: "id", sortable: true, filter: true, width: 300 },
-    { headerName: "Name", field: "name", sortable: true, filter: true, width: 300 },
-    { headerName: "Email", field: "email", sortable: true, filter: true, width: 300 },
-    { headerName: "Role", field: "role", sortable: true, filter: true, width: 200 },
+    { headerName: "Location_id", field: "location_id", flex: 2 },
+    { headerName: "Name", field: "name", flex: 2 },
+    { headerName: "Email", field: "email", flex: 2 },
+    { headerName: "Role", field: "role", flex: 1 },
     {
       headerName: "Status",
       field: "status",
-      sortable: true,
+      flex: 1,
       filter: 'agSetColumnFilter',
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: {
-        values: ['active', 'inactive'],
-      },
       cellRenderer: (params) => (
-        <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-semibold leading-tight ${params.value === "active" ? "text-green-800 bg-green-200 rounded-full" : "text-red-800 bg-red-200 rounded-full"}`}>
-          {params.value}
-        </span>
+        <span
+  className={`inline-flex items-center justify-center px-2 py-1 text-xs font-medium leading-tight capitalize ${
+    params.value === "active"
+      ? "text-green-800 bg-green-200 rounded-full"
+      : "text-red-800 bg-red-200 rounded-full"
+  }`}
+>
+  {params.value}
+</span>
+
       )
     },
     {
       headerName: "Actions",
       field: "actions",
-      width: 200,
+      flex: 1.5,
       cellRenderer: (params) => (
-        <div className="flex items-center space-x-2 h-full">
-          {user?.role === 'superadmin' && (
-            <>
-              <span
-                className="cursor-pointer text-blue-600 hover:text-blue-800"
-                onClick={() => handleEditUser(params.data)}
-              >
-                <FaEdit size={20} />
-              </span>
-              <span
-                className="cursor-pointer text-red-600 hover:text-red-800"
-                onClick={() => handleDeleteUser(params.data)}
-              >
-                <MdDeleteSweep size={20} />
-              </span>
-            </>
-          )}
-        </div>
-      ),
-    },
+        <div className=" inline-flex items-center  space-x-2">
+  {user?.role === 'superadmin' && (
+    <>
+      <span
+        className="cursor-pointer text-[#5742e3] hover:scale-110 transition-transform"
+        onClick={() => handleEditUser(params.data)}
+        title="Edit"
+      >
+        <FaEdit size={18} />
+      </span>
+      <span
+        className="cursor-pointer text-red-600 hover:scale-110 transition-transform"
+        onClick={() => handleDeleteUser(params.data)}
+        title="Delete"
+      >
+        <MdDeleteSweep size={20} />
+      </span>
+    </>
+  )}
+</div>
+
+      )
+    }
   ];
 
   return (
     <div className="mt-12 mb-8 flex flex-col items-center">
       <Card className="w-full">
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6 flex justify-between items-center">
-          <Typography variant="h6" color="white">Users</Typography>
+        <CardHeader variant="gradient" className="mb-8 p-6 flex justify-between items-center bg-[#accdfa]">
+          <Typography variant="h6" className="text-[#5742e3] font-bold">Users</Typography>
           {user?.role === 'superadmin' && (
             <Button variant="h6" color="white" onClick={handleCreateUser}>Create User</Button>
           )}
@@ -220,7 +220,6 @@ const handleSubmit = async () => {
         </CardBody>
       </Card>
 
-      {/* Modal for Creating/Editing User */}
       <ModalComponent
         open={open}
         onClose={handleClose}
@@ -231,14 +230,25 @@ const handleSubmit = async () => {
         isEditMode={isEditMode}
       />
 
-      {/* Confirmation Modal for Deleting User */}
       {deleteConfirmOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <p className="text-lg">Are you sure you want to delete this user?</p>
-            <div className="mt-4 flex space-x-4">
-              <Button color="red" onClick={() => setDeleteConfirmOpen(false)}>No</Button>
-              <Button color="green" onClick={confirmDelete}>Yes</Button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-[#d9d9d9] max-w-sm w-full animate-fadeInScale">
+            <p className="text-[#5742e3] font-medium text-lg text-center">
+              Are you sure you want to delete this user?
+            </p>
+            <div className="mt-6 flex justify-center gap-4">
+              <Button
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="bg-[#e9eafb] text-[#5742e3] border border-[#d9d9d9] hover:bg-[#5742e3] hover:text-white font-medium"
+              >
+                No
+              </Button>
+              <Button
+                onClick={confirmDelete}
+                className="bg-[#5742e3] text-white hover:bg-[#4634bb] font-medium"
+              >
+                Yes
+              </Button>
             </div>
           </div>
         </div>
