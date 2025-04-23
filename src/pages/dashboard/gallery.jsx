@@ -586,11 +586,7 @@ console.log("Sorting by name in order:", order);
   )}
     {user?.role === 'company' && (
     <div className="relative">
-      {/* Cover Image Section */}
- 
-      {/* <div className="relative bg-gradient-to-r text-white p-6 rounded-lg mb-6 h-full  flex flex-col justify-center items-center">
-       
-      </div> */}
+     
 <div className="mt-1 bg-white p-2 rounded-xl shadow-lg border border-gray-200">
   <div className="flex flex-col lg:flex-row md:flex-row justify-between items-center mb-3 mt-3">
     <div className="flex items-center space-x-4 ">
@@ -843,149 +839,139 @@ console.log("Sorting by name in order:", order);
 
 
 
-{gallery && gallery.length > 0 ? (
-   <>{loading && <Loader />}
+
+   <>
   <div className={`grid ${getGridColumns()} gap-4 p-4 flex justify-center items-center min-h-[300px]`}>
-   
+  {loading ? (
+  <Loader />
+) : gallery && gallery.length > 0 ? (
+  gallery.map((project) => {
+    const displayImage = localStorage.getItem(`croppedImage_${project?.cardCoverImage}`);
+    const croppedImage = displayImage || project?.cardCoverImage;
 
-    {gallery && gallery.map((project) => {
-      // console.log("set",project?.basicContactData?.contact_id)
-      const displayImage = localStorage.getItem(`croppedImage_${project?.cardCoverImage}`);
-      const croppedImage = displayImage || project?.cardCoverImage;
-     
-const handleCardClick = (contactId, location) => {
-  // Prepare the data to send via postMessage
-  const messageData = {
-    contactId: contactId,
-    location: location,
-  };
-console.log(location)
-  // Send both contactId and locationId to the parent window using postMessage
-  window.parent.postMessage(messageData, "*"); // "*" allows communication with any domain. Ideally, specify the exact domain of the parent.
-  
-  console.log("Sent to parent:", messageData);
-};
- const contactId = project?.basicContactData?.contact_id
-const location=project?.basicContactData?.location_id
+    const handleCardClick = (contactId, location) => {
+      const messageData = { contactId, location };
+      window.parent.postMessage(messageData, "*");
+      console.log("Sent to parent:", messageData);
+    };
 
-      return (
-    <Card
-  key={project?.basicContactData?.id}
-  className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white border border-[#d9d9d9] hover:shadow-2xl transition duration-300 ${
-    cardSize === "medium" ? "sm:max-w-md" : cardSize === "large" ? "sm:max-w-lg" : ""
-  } flex flex-col h-fit cursor-pointer`}
- 
->
-  {/* Top Section: 65% height */}
-  <div className="relative flex-shrink-0 h-[65%] overflow-hidden">
-    <div className="absolute top-2 right-2 z-10">
-      {croppedImage && (
-        <button onClick={() => handleCropClick(project)}>
-          <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
-        </button>
-      )}
-    </div>
+    const contactId = project?.basicContactData?.contact_id;
+    const location = project?.basicContactData?.location_id;
 
-    {/* Image or Placeholder */}
-    {croppedImage ? (
-      <img
-        src={croppedImage}
-        alt={project?.basicContactData?.name}
-        className="object-cover w-full h-full aspect-[3/4]"
-      />
-    ) : (
-      <div className="w-full h-full aspect-[3/4] bg-white flex items-center justify-center">
-        {/* Placeholder */}
-      </div>
-    )}
-
-    {/* Overlay Gradient and Title */}
-    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/10 via-transparent to-transparent p-2 flex justify-center">
-      <h2
-        className={`text-center font-bold text-black text-${getTextSize()} truncate`}
-        style={{
-          textShadow: '0px 0px 2px white, 1px 1px 1px white',
-        }}
+    return (
+      <Card
+        key={project?.basicContactData?.id}
+        className={`w-full max-w-sm shadow-xl rounded-lg overflow-hidden bg-white border border-[#d9d9d9] hover:shadow-2xl transition duration-300 ${
+          cardSize === "medium"
+            ? "sm:max-w-md"
+            : cardSize === "large"
+            ? "sm:max-w-lg"
+            : ""
+        } flex flex-col h-fit cursor-pointer`}
       >
-        {formatName(project.basicContactData?.name) || "No Name"}
-      </h2>
-    </div>
-
-    {/* Cropper UI */}
-    {isCropping && activeProjectId === project?.basicContactData?.id && (
-      <div className="crop-container">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50 z-10">
-            <div className="w-16 h-16 border-4 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+        <div className="relative flex-shrink-0 h-[65%] overflow-hidden">
+          <div className="absolute top-2 right-2 z-10">
+            {croppedImage && (
+              <button onClick={() => handleCropClick(project)}>
+                <BiDotsVerticalRounded className="text-white cursor-pointer text-2xl" />
+              </button>
+            )}
           </div>
-        )}
-        <Cropper
-          image={imageSrc}
-          crop={crop}
-          zoom={zoom}
-          rotation={rotation}
-          aspect={1}
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onRotationChange={setRotation}
-          onCropComplete={onCropComplete}
-        />
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
-          <button
-            onClick={handleSaveCrop}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
-            disabled={loading}
-          >
-            Save
-          </button>
-          <button
-            onClick={handleCancelCrop}
-            className="bg-gray-400 text-white px-4 py-2 rounded-md"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
 
-  {/* Bottom Section: 35% height */}
-  <CardBody className="p-2 flex-grow flex-col justify-between h-[35%] overflow-hodden"  onClick={() => handleCardClick(contactId, location)}>
-    <div className="flex flex-col flex-1 ">
-      <Typography
-        variant="h1"
-        className={`flex justify-center ${ProjectTextSize()} font-bold text-black mb-1`}
-      >
-        {project.standardCustomFields["projectDate"]
-          ? formatDate(project.standardCustomFields["projectDate"])
-          : "No Project Date Available"}
-      </Typography>
+          {croppedImage ? (
+            <img
+              src={croppedImage}
+              alt={project?.basicContactData?.name}
+              className="object-cover w-full h-full aspect-[3/4]"
+            />
+          ) : (
+            <div className="w-full h-full aspect-[3/4] bg-white flex items-center justify-center" />
+          )}
 
-      <div className={`flex justify-center items-center ${labelTextSize()} text-gray-600 mb-1`}>
-        <span>{project.standardCustomFields.startTime || "00.00"}</span>
-        <span className="mx-2 labelTextSize()">→</span>
-        <span>{project.standardCustomFields.finishTime || "00.00"}</span>
-      </div>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/10 via-transparent to-transparent p-2 flex justify-center">
+            <h2
+              className={`text-center font-bold text-black text-${getTextSize()} truncate`}
+              style={{ textShadow: "0px 0px 2px white, 1px 1px 1px white" }}
+            >
+              {formatName(project.basicContactData?.name) || "No Name"}
+            </h2>
+          </div>
 
-      <div className={`flex justify-center items-center ${getTextSize()} text-gray-600 mb-1`}>
-        <Tooltip title={project?.basicContactData?.address }>
-          <Typography variant="body2" className={`truncate font-medium text-${labelTextSize()}`}>
-            {project?.basicContactData?.address || "No Address"}
-          </Typography>
-        </Tooltip>
-      </div>
-
-      {/* Custom Fields */}
-      {project?.customCustomFields.map((field, index) => (
-        <div key={index} className={`mb-1 flex items-start gap-x-2 ${labelTextSize()}`}>
-          <Tooltip title={field.label} arrow>
-            <div className="text-black font-normal truncate w-[45%] overflow-hidden">
-              <Typography variant="body2" className={`truncate font-normal text-${labelTextSize()} linesettings`}>
-                {field?.value?.includes("http") ? "CustomField" : field?.label}:
-              </Typography>
+          {isCropping && activeProjectId === project?.basicContactData?.id && (
+            <div className="crop-container">
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50 z-10">
+                  <div className="w-16 h-16 border-4 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+                </div>
+              )}
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                rotation={rotation}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onRotationChange={setRotation}
+                onCropComplete={onCropComplete}
+              />
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+                <button
+                  onClick={handleSaveCrop}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                  disabled={loading}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelCrop}
+                  className="bg-gray-400 text-white px-4 py-2 rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </Tooltip>
-  <Tooltip title={field.value} arrow>
+          )}
+        </div>
+
+        <CardBody
+          className="p-2 flex-grow flex-col justify-between h-[35%]"
+          onClick={() => handleCardClick(contactId, location)}
+        >
+          <div className="flex flex-col flex-1">
+            <Typography
+              variant="h1"
+              className={`flex justify-center ${ProjectTextSize()} font-bold text-black mb-1`}
+            >
+              {project.standardCustomFields["projectDate"]
+                ? formatDate(project.standardCustomFields["projectDate"])
+                : "No Project Date Available"}
+            </Typography>
+
+            <div className={`flex justify-center items-center ${labelTextSize()} text-gray-600 mb-1`}>
+              <span>{project.standardCustomFields.startTime || "00.00"}</span>
+              <span className="mx-2">→</span>
+              <span>{project.standardCustomFields.finishTime || "00.00"}</span>
+            </div>
+
+            <div className={`flex justify-center items-center ${getTextSize()} text-gray-600 mb-1`}>
+              <Tooltip title={project?.basicContactData?.address}>
+                <Typography variant="body2" className={`truncate font-medium text-${labelTextSize()}`}>
+                  {project?.basicContactData?.address || "No Address"}
+                </Typography>
+              </Tooltip>
+            </div>
+
+            {project?.customCustomFields.map((field, index) => (
+              <div key={index} className={`mb-1 flex items-start gap-x-2 ${labelTextSize()}`}>
+                <Tooltip title={field.label} arrow>
+                  <div className="text-black font-normal truncate w-[45%] overflow-hidden">
+                    <Typography variant="body2" className={`truncate font-normal text-${labelTextSize()} linesettings`}>
+                      {field?.value?.includes("http") ? "CustomField" : field?.label}:
+                    </Typography>
+                  </div>
+                </Tooltip>
+                <Tooltip title={field.value} arrow>
                   <div className={`text-gray-800 truncate w-[55%] overflow-hidden text-${labelTextSize()}`}>
                     {field?.value?.includes("http") ? (
                       <a
@@ -1001,59 +987,58 @@ const location=project?.basicContactData?.location_id
                     )}
                   </div>
                 </Tooltip>
-        
-        </div>
-      ))}
-     <div className="flex flex-wrap mt-1 relative min-h-[25px] ">
-         {project.relatedImages.slice(0, 10).map((imageUrl, index) => (
-          <div
-            key={index}
-            className="flex items-center space-x-2 group relative cursor-pointer"
-           
-          >
-      
-            <img
-              src={imageUrl}
-              alt={`Related Image ${index + 1}`}
-              className="border-2 border-gray-300 rounded-md w-[15.5px] h-6 object-cover transition-transform duration-300 transform group-hover:scale-110"
-            />
+              </div>
+            ))}
+
+            <div className="flex flex-wrap mt-1 relative min-h-[25px]">
+              {project.relatedImages.slice(0, 10).map((imageUrl, index) => (
+                <div key={index} className="flex items-center space-x-2 group relative cursor-pointer">
+                  <img
+                    src={imageUrl}
+                    alt={`Related Image ${index + 1}`}
+                    className="border-2 border-gray-300 rounded-md w-[15.5px] h-6 object-cover transition-transform duration-300 transform group-hover:scale-110"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {previewImage && (
+              <div
+                className="fixed inset-0 z-50 bg-black/10 backdrop-blur-md bg-opacity-70 flex items-center justify-center transition-opacity duration-300"
+                onClick={closePreview}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative max-w-2xl w-[90%] scale-95 animate-zoomIn"
+                >
+                  <button
+                    onClick={closePreview}
+                    className="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform duration-300"
+                  >
+                    <FaTimes className="text-[#5742e3]" />
+                  </button>
+
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    className="rounded-xl border border-[#d9d9d9] shadow-2xl w-full"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        </CardBody>
+      </Card>
+    );
+  })
+) : (
+  <div className="col-span-full text-center text-gray-500 py-12">
+    {isFiltered ? "No matching records found for the applied filters." : "No data available yet."}
+  </div>
+)}
 
-      {/* Fancy Modal Preview */}
-      {previewImage && (
-        <div
-          className="fixed inset-0 z-50 bg-black/10 backdrop-blur-md  bg-opacity-70 flex items-center justify-center  transition-opacity duration-300"
-          onClick={closePreview}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-2xl w-[90%] scale-95 animate-zoomIn"
-          >
-            {/* Close Button */}
-            <button
-              onClick={closePreview}
-              className="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform duration-300"
-            >
-              <FaTimes className="text-[#5742e3]" />
-            </button>
 
-            {/* Image */}
-            <img
-              src={previewImage}
-              alt="Preview"
-              className="rounded-xl border border-[#d9d9d9] shadow-2xl w-full"
-            />
-          </div>
-        </div>
-      )}
-        </div>
-      </CardBody>
-</Card>
-
-      );
-    })}
+  
   </div>
 
  
@@ -1063,16 +1048,11 @@ const location=project?.basicContactData?.location_id
 
        
  </>
-) : (
-    <div className="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 ">
-      {loading && <Loader />}  
-        </div>
-
-)}   </div> 
+  </div> 
   )}
   <></>
      {gallery && gallery.length > 0 && (
-          <footer className="mt-9 py-2">
+          <footer className=" py-2">
              
           
             {/* Pagination */}
@@ -1089,7 +1069,7 @@ const location=project?.basicContactData?.location_id
 
   <Button
     onClick={() => handlePageChange(page + 1)}
-    disabled={page * limit >= totalContacts}
+    disabled={limit === 0 || page * limit >= totalContacts}
     className="bg-[#accdfa] hover:bg-[#5742e3] text-white px-4 py-2 rounded-full disabled:opacity-90 disabled:cursor-not-allowed"
   >
     Next
