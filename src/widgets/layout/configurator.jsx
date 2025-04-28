@@ -8,7 +8,7 @@ import { CircularProgress, Button, TextField } from '@mui/material';
 import CachedIcon from '@mui/icons-material/Cached';
 import { sync } from '@/Api/Settingsapi';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-
+import { getGallery  } from '@/Redux/slices/Gallery.slice'
 export function Configurator() {
   const dispatch = useDispatch();
   const { customFields, loading, error } = useSelector(state => state.displaycfields);
@@ -53,11 +53,16 @@ export function Configurator() {
 
     dispatch(updateDisplaySettings({ displaySetting: fieldsToSave }))
       .then(() => {
+        
         toast.success('Selections saved successfully!');
-        setTimeout(() => {
-          dispatch(fetchCustomFields());
-          window.location.reload();
-        }, 2000);
+   
+      dispatch(getGallery({
+        page,
+        limit,
+        sortName,
+        sortDate,
+      }));
+    dispatch(fetchCustomFields());
         setIsSaving(false);
       })
       .catch(() => {

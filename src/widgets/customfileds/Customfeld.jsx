@@ -44,7 +44,7 @@ const CustomFieldsSelection = () => {
     if (selectedFields.some(field => field.cf_id === cf_id)) {
       // Remove field if already selected
       setSelectedFields(selectedFields.filter(item => item.cf_id !== cf_id));
-    } else if (selectedFields.length < 6) {
+    } else if (selectedFields.length < 5) {
       // Add new field if less than 6 fields are selected
       setSelectedFields([...selectedFields, { cf_id, cf_name }]);
     }
@@ -192,7 +192,7 @@ dispatch(getImageSettings())
                           checked={selectedFields.some(field => field.cf_id === cf_id)}
                           onChange={() => handleSelection(cf_id, cf_name)}
                           color="primary"
-                          disabled={selectedFields.length === 6 && !selectedFields.some(field => field.cf_id === cf_id)}
+                          disabled={selectedFields.length === 5 && !selectedFields.some(field => field.cf_id === cf_id)}
                         />
                       </TableCell>
                     </TableRow>

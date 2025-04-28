@@ -58,18 +58,22 @@ export function DashboardNavbar({ routes }) {
 
   const isGalleryPage = page.toLowerCase() === "gallery";
 
- const filteredRoutes = routes.map((route) => ({
-  ...route,
-  pages: route.pages.filter(
-    (page) =>
-      page.name !== "profile" &&
-      !(page.name === "sign in" && isAuthenticated) &&
-      !(user?.role === "superadmin" && (page.name === "contacts" || page.name === "gallery")) &&
-      !(user?.role === "company" && (page.name === "user" || page.name === "dashboard"))
-  ),
-}));
+const filteredRoutes = user && isAuthenticated
+  ? routes.map((route) => ({
+      ...route,
+      pages: route.pages.filter(
+        (page) =>
+          page.name !== "profile" &&
+          !(page.name === "sign in" && isAuthenticated) &&
+          !(user.role === "superadmin" && (page.name === "contacts" || page.name === "gallery")) &&
+          !(user.role === "company" && (page.name === "user" || page.name === "dashboard"))
+      ),
+    }))
+  : [];
 
-console.log("Filtered Routes:", filteredRoutes);
+
+
+
   return (
     <>
       <Navbar color="transparent" className="rounded-xl transition-all sticky top-4 z-40 px-0 py-1" fullWidth>

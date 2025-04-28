@@ -204,7 +204,7 @@ export const UsersTable = () => {
                 rowData={rowData}
                 columnDefs={columnDefs}
                 pagination={true}
-                paginationPageSize={40}
+                paginationPageSize={20}
                 domLayout='autoHeight'
                 animateRows={true}
                 enableSorting={true}

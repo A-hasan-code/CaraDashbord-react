@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { registerUser, loginUser, getUserProfile, updateUserProfile, forgotPassword, resetPassword, getAllUsers, logoutUser, updateUserBySuperadmin, deleteUserBySuperadmin } from '../../Api/Users';
-
+import {sync} from '@/Api/Settingsapi'
 // Async thunks for API calls
 export const register = createAsyncThunk('user/register', async (userData, { rejectWithValue }) => {
     try {
@@ -19,9 +19,18 @@ export const login = createAsyncThunk('user/login', async (loginData, { rejectWi
 
             dispatch(setUser(data.user)); // Set user and authentication state
         }
+        const alreadySynced = sessionStorage.getItem('synced');
+        if (!alreadySynced) {
+            sync() // no await — this will run in background
+                .then(() => sessionStorage.setItem('synced', 'true'))
+                .catch((err) => console.error('Sync error (background):', err));
+        }
+    
+    
         return data;
     } catch (error) {
-        return rejectWithValue(error.message || 'email or password is incorrect');
+        console.log('slice', error )
+        return rejectWithValue(error|| 'email or password is incorrect');
     }
 });
 

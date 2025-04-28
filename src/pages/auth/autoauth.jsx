@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import Axios from '@/Api/Axios';
+import {sync} from '@/Api/Settingsapi'
 const autoauth = () => {
       const [isIframe, setIsIframe] = useState(false);
       const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -33,13 +34,19 @@ const autoauth = () => {
               localStorage.setItem('token', response.data.token);
               sessionStorage.setItem("showToast", "true");
               toast.success("Authenticated successfully!");
+              const alreadySynced = sessionStorage.getItem("synced");
+      if (!alreadySynced) {
+        sync()
+          .then(() => sessionStorage.setItem("synced", "true"))
+          .catch(err => console.error("Sync error (autoauth):", err));
+      }
               setLoading(false);
               navigate("/dashboard/gallery");
               window.location.reload();
             } 
           } catch (error) {
-            console.error("Authentication Error:", error);
-            toast.error("Error during authentication.");
+            console.error("Authentication Error:", error.response.data);
+            toast.error(error.response.data.message || "Error during authentication.");
             setLoading(false);
             setIsAuthenticating(false);
           }

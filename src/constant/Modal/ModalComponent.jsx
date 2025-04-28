@@ -100,7 +100,7 @@ console.log(userData)
        
 
         {/* Location */}
-        <TextField
+  {!isEditMode && (      <TextField
           label="Location ID"
           name="location_id"
           value={userData?.location_id}
@@ -109,9 +109,9 @@ console.log(userData)
           margin="normal"
           size="small"
         />
-
+ )}
         {/* Password - Fixed */}
-        {!isEditMode && (
+        
           <TextField
             label="Password"
             name="password"
@@ -120,7 +120,7 @@ console.log(userData)
             margin="normal"
             size="small"
           />
-        )}
+       
 
         {/* Actions */}
         <div className="flex justify-end space-x-2 mt-6">

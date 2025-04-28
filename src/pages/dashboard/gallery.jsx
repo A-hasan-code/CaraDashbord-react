@@ -37,6 +37,7 @@ import { LuSettings, LuFileText } from "react-icons/lu";
 import { BiSort,BiSolidSortAlt } from "react-icons/bi";
 import { SlCalender } from "react-icons/sl";
 import { FaTimes } from "react-icons/fa";
+import { uploadCroppedImage } from "@/Api/cropapi";
 const customStyles = {
   control: (provided, state) => ({
     ...provided,
@@ -99,7 +100,7 @@ export function Gallery() {
     sortName,
     sortDate
   });
-  console.log('galleryData', gallery);
+ 
     const [tags, setTags] = useState('');
    
   const [Loading, setLoading] = useState(false);
@@ -139,7 +140,11 @@ const [atags, setaTags] = useState('');
   const [calendarVisible, setCalendarVisible] = useState(false);
     const [isConfiguratorOpen, setIsConfiguratorOpen] = useState(false);
 
+const [localGallery, setLocalGallery] = useState([]);
 
+useEffect(() => {
+  setLocalGallery(gallery || []);
+}, [gallery]);
 
   const configuratorRef = useRef(null);
   // const toggleConfigurator = () => {
@@ -148,6 +153,7 @@ const [atags, setaTags] = useState('');
   const { user,  } = useSelector((state) => state.user);
 // Handle image crop click
   const handleCropClick = (project) => {
+   
     setActiveProjectId(project?.basicContactData?.id);
     setIsCropping(true);
     setImageSrc(project.cardCoverImage);
@@ -167,7 +173,7 @@ const [atags, setaTags] = useState('');
 const getCroppedImg = (imageSrc, crop, zoom, rotation) => {
   const image = new Image();
   image.src = imageSrc;
-  image.crossOrigin = "anonymous"; // This allows cross-origin loading without credentials.
+  image.crossOrigin = "anonymous"; 
 
   return new Promise((resolve, reject) => {
     image.onload = () => {
@@ -205,32 +211,36 @@ const getCroppedImg = (imageSrc, crop, zoom, rotation) => {
 const handleSaveCrop = async () => {
   if (imageSrc && croppedAreaPixels) {
     try {
-      setLoading(true);  // Set loading to true when crop operation starts
+      setLoading(true);
+      const croppedImgBase64 = await getCroppedImg(imageSrc, croppedAreaPixels, zoom, rotation);
+      const blob = await fetch(croppedImgBase64).then(res => res.blob());
 
-      // Get the cropped image as base64
-      const croppedImg = await getCroppedImg(imageSrc, croppedAreaPixels, zoom, rotation);
-      
-      // Save the cropped image in localStorage or state
-      localStorage.setItem(`croppedImage_${imageSrc}`, croppedImg);
-      
-      // Optionally, set the state to show the cropped image immediately
-      setCroppedImage(croppedImg);
+      const response = await uploadCroppedImage(blob, activeProjectId);
 
-      // Hide the cropping UI by setting isCropping to false
+      setCroppedImage(response.imageUrl);
       setIsCropping(false);
-      
-      // Optional: reset crop settings (if needed)
       setCrop({ x: 0, y: 0 });
       setZoom(1);
       setRotation(0);
 
+      // ✅ Update only that one card locally
+      setLocalGallery((prevGallery) =>
+        prevGallery.map((item) =>
+          item.basicContactData.id === activeProjectId
+            ? { ...item, cropedImage: response.imageUrl }
+            : item
+        )
+      );
+
     } catch (error) {
-      console.error("Error cropping image:", error);
+      console.error("Error uploading cropped image:", error);
     } finally {
-      setLoading(false);  // Set loading to false when crop operation finishes
+      setLoading(false);
     }
   }
 };
+
+
 
 const toggleConfigurator = () => {
     setIsConfiguratorOpen(!isConfiguratorOpen);
@@ -256,7 +266,7 @@ const handleInputChange = (value) => {
 
   // Handle multi-select change (on selection)
   const handleMultiSelectChange = (selected) => {
-    setSelectedOptions(selected || []); // Set selected options (multi-select)
+    setSelectedOptions(selected || []); 
   };
 // useEffect(() => {
 //   if (selectedOptions.length === 0 && inputValue === '') {
@@ -271,20 +281,20 @@ const handleInputChange = (value) => {
   // Fetch search suggestions based on inputValue
   useEffect(() => {
     const fetchData = async () => {
-      if (inputValue) { // Only fetch if there's an input value
+      if (inputValue) { 
         try {
-          const data = await getSearchSuggestions(inputValue); // API call
+          const data = await getSearchSuggestions(inputValue); 
           const formattedOptions = data?.suggestions?.map(item => ({
-            label: item,  // Label for displaying
-            value: item   // Value for selection
+            label: item,  
+            value: item   
           })) || [];
 
-          setOptions(formattedOptions); // Set new options
+          setOptions(formattedOptions); 
         } catch (error) {
           console.error("Error fetching data:", error);
         }
       } else {
-        setOptions([]); // Clear options if inputValue is empty
+        setOptions([]); 
       }
     };
 
@@ -292,7 +302,7 @@ const handleInputChange = (value) => {
   }, [inputValue]);
    useEffect(() => {
     if (selectedOptions.length === 0) {
-      // Reset filter if no options are selected
+      
       setOptions([]);
       setaTags('');
     }
@@ -369,31 +379,22 @@ useEffect(() => {
 
  useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close settings if clicked outside
+   
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setShowSettings(false);
       }
     };
 
-    // Attach the event listener
+
     document.addEventListener("mousedown", handleClickOutside);
 
-    // Cleanup the event listener when the component is unmounted or updated
+  
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-// useEffect(() => {
-//   // Fetch data again whenever specific filters change
-//   dispatch(getGallery({ 
-//     page, 
-//     limit, 
-//     tags: atags, 
-//     sortName, 
-//     sortDate 
-//   }));
-// }, [dispatch, page, limit, atags, sortName, sortDate]); // Trigger on changes in filters or other conditions
+
 
  const getGridColumns = () => {
   switch (cardSize) {
@@ -526,23 +527,28 @@ console.log("Sorting by name in order:", order);
    
   };
  const handleDateRangeChange = (range) => {
-  setIsFiltered(true);
   const start = range.startDate;
   const end = range.endDate;
 
-  dispatch(setPage(1)); // Reset to first page
   dispatch(setStartDate(start));
   dispatch(setEndDate(end));
-  dispatch(getGallery({
-    page: 1,
-    limit,
-    tags: atags,
-    sortName,
-    sortDate,
-    startDate: start,
-    endDate: end,
-  }));
+
+  // Only fire API if both dates are set and valid
+  if (start && end && new Date(end) >= new Date(start)) {
+    setIsFiltered(true);
+    dispatch(setPage(1));
+    dispatch(getGallery({
+      page: 1,
+      limit,
+      tags: atags,
+      sortName,
+      sortDate,
+      startDate: start,
+      endDate: end,
+    }));
+  }
 };
+
 
 
  const handleClearFilters = () => {
@@ -566,10 +572,10 @@ console.log("Sorting by name in order:", order);
   const Loader = () => (
    <div className="flex flex-col justify-center items-center w-full h-full fixed top-0 left-0 bg-white bg-opacity-50 z-10">
   {/* Spinner */}
-  <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin mb-4"></div>
+  <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin mb-4"></div>
 
   {/* Loading Text */}
-  <div className="text-[#5742e3] font-medium text-lg">Loading fresh data ...</div>
+  <div className="text-gray-500 font-medium text-sm">Loading fresh data ...</div>
 </div>
 
 );
@@ -844,9 +850,11 @@ console.log("Sorting by name in order:", order);
   <div className={`grid ${getGridColumns()} gap-4 p-4 flex justify-center items-center min-h-[300px]`}>
   {loading ? (
   <Loader />
-) : gallery && gallery.length > 0 ? (
-  gallery.map((project) => {
-    const displayImage = localStorage.getItem(`croppedImage_${project?.cardCoverImage}`);
+) : localGallery && localGallery.length > 0 ? (
+  localGallery.map((project) => {
+    console.log(project)
+    const displayImage = project?.cropedImage;
+    console.log(displayImage)
     const croppedImage = displayImage || project?.cardCoverImage;
 
     const handleCardClick = (contactId, location) => {
@@ -967,15 +975,15 @@ console.log("Sorting by name in order:", order);
                 <Tooltip title={field.label} arrow>
                   <div className="text-black font-normal truncate w-[45%] overflow-hidden">
                     <Typography variant="body2" className={`truncate font-normal text-${labelTextSize()} linesettings`}>
-                      {field?.value?.includes("http") ? "CustomField" : field?.label}:
+                      {field?.value?.value?.includes("http") ? "CustomField" : field?.label}:
                     </Typography>
                   </div>
                 </Tooltip>
                 <Tooltip title={field.value} arrow>
                   <div className={`text-gray-800 truncate w-[55%] overflow-hidden text-${labelTextSize()}`}>
-                    {field?.value?.includes("http") ? (
+                    {field?.value?.value?.includes("http") ? (
                       <a
-                        href={field?.value}
+                        href={field?.value?.value}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:underline"
@@ -983,7 +991,7 @@ console.log("Sorting by name in order:", order);
                         {field?.label}
                       </a>
                     ) : (
-                      field?.value || "null"
+                      field?.value?.value || "null"
                     )}
                   </div>
                 </Tooltip>

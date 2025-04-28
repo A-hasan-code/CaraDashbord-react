@@ -6,7 +6,8 @@ export const registerUser = async (userData) => {
         const response = await Axios.post('/register', userData);
         return response.data;
     } catch (error) {
-        throw error.message;  // Handle error
+
+        throw error.response.data.message;  // Handle error
     }
 };
 
@@ -17,8 +18,8 @@ export const loginUser = async (loginData) => {
 
         return response.data;
     } catch (error) {
-      
-        throw error.message;  // Handle error
+        console.log(error.response.data.message)
+        throw error.response.data.message;  // Handle error
     }
 };
 
@@ -28,7 +29,7 @@ export const getUserProfile = async () => {
         const response = await Axios.get('/profile');
         return response.data;
     } catch (error) {
-        throw error.message;
+        throw error.response.data.message;
     }
 };
 
@@ -38,7 +39,7 @@ export const updateUserProfile = async (updateData) => {
         const response = await Axios.put('/profile', updateData);
         return response.data;
     } catch (error) {
-        throw error.message;
+        throw error.response.data.message;
     }
 };
 
@@ -48,7 +49,7 @@ export const forgotPassword = async (email) => {
         const response = await Axios.post('/forgot-password', { email });
         return response.data;
     } catch (error) {
-        throw error.message;
+        throw error.response.data.message;
     }
 };
 
@@ -58,7 +59,7 @@ export const resetPassword = async (resetToken, newPassword) => {
         const response = await Axios.put(`/reset-password/${resetToken}`, { password: newPassword });
         return response.data;
     } catch (error) {
-        throw error.message;
+        throw error.response.data.message;
     }
 };
 
@@ -68,7 +69,7 @@ export const getAllUsers = async () => {
         const response = await Axios.get('/getall');
         return response.data;
     } catch (error) {
-        throw error.message;
+        throw error.response.data.message;
     }
 };
 
@@ -78,7 +79,7 @@ export const logoutUser = async () => {
         const response = await Axios.get('/logout');
         return response.data;
     } catch (error) {
-        throw error.message;
+        throw error.response.data.message;
     }
 };
 
@@ -91,7 +92,7 @@ export const updateUserBySuperadmin = async (userId, updatedData) => {
         return response.data;  // Return the response if needed
     } catch (error) {
 
-        return error.response?.data || error.message;  // Return the error message if needed
+        return error.response?.data || error.response.data.message;  // Return the error message if needed
     }
 };
 

@@ -162,6 +162,10 @@ export function Profile() {
                   src={formData?.image instanceof File ? URL.createObjectURL(formData.image) : formData?.image} // If the image is a file, use object URL
                   alt="User Avatar"
                   className="h-[150px] w-[150px] shadow-lg shadow-blue-gray-500/40 border-2 border-white"
+                   onError={(e) => {
+    e.target.onerror = null; // Prevents infinite loop if fallback also fails
+    e.target.src = "https://missysue.com/wp-content/uploads/2019/08/half-up-dutch-braids-2.jpg";
+  }}
                 />
                 {isEditing && (
                   <div className="absolute bottom-1 right-1 bg-blue-500 p-1 rounded-full cursor-pointer hover:bg-blue-600 transition-all duration-200">
@@ -266,15 +270,17 @@ export function Profile() {
               </div>
             </div>
 
-            <div className="mt-6">
-              <Input
-                label="Location ID"
-                name="location_id"
-                value={formData.location_id}
-                onChange={handleChange}
-                disabled={!isEditing}
-              />
-            </div>
+  {user?.role !== "superadmin" && (
+  <div className="mt-6">
+    <Input
+      label="Location ID"
+      name="location_id"
+      value={formData.location_id}
+      onChange={handleChange}
+      disabled={!isEditing}
+    />
+  </div>
+)}
           </div>
 
           {error && (

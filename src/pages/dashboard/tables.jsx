@@ -11,31 +11,69 @@ export function Tables() {
   
   // Getting the contacts state from Redux store
   const { contacts, loading, error } = useSelector((state) => state.contacts);
-console.log("contacts", error)
+console.log("contacts", contacts)
   // Fetch contacts on component mount
   useEffect(() => {
     dispatch(fetchContacts());
   }, [dispatch]);
 
   // Row data for the table
-  const rowData = contacts.map((contact) => ({
-    id: contact.contact_id,
-    name: (contact.name === null ||contact.name === 'null null' || contact.name=== undefined )?"NO Name":contact.name,
-    email: contact.email,
-    location_id: contact.location_id,
-    country: contact.country,
-    phone: contact.phone,
-  }));
+const rowData = contacts.map((contact) => ({
+  id: contact.contact_id,
+  name:
+    !contact.name || contact.name === 'null null'
+      ? 'NO Name'
+      : contact.name,
+  email: contact.email,
+  project_date: contact.Project_date
+    ? new Date(contact.Project_date).toLocaleDateString("en-AU")
+    : "No Date",
+  tags: contact.tags || [],
+  phone: contact.phone,
+}));
+
 
   // Column definitions for the Ag-Grid table
-  const columnDefs = [
-    { headerName: "ID", field: "id", sortable: true, filter: false  ,width:300},
-    { headerName: "Name", field: "name", sortable: true, filter: false,width:300 },
-    { headerName: "Email", field: "email", sortable: true, filter: false,width:300 },
-    { headerName: "location_id", field: "location_id", sortable: true, filter: false,width:300 },
-    { headerName: "country", field: "country", sortable: true, filter: false,width:300 },
-    { headerName: "phone", field: "phone", sortable: true, filter: false ,width:300},
-  ];
+const columnDefs = [
+  { headerName: "ID", field: "id", sortable: true, width: 300 },
+  { headerName: "Name", field: "name", sortable: true, width: 300 },
+  { headerName: "Email", field: "email", sortable: true, width: 300 },
+  {
+    headerName: "Project Date",
+    field: "project_date",
+    sortable: true,
+    width: 350,
+  },
+  { headerName: "Phone", field: "phone", sortable: true, width: 300 },
+  {
+  headerName: "Tags",
+  field: "tags",
+  width: 300,
+  Height:200,
+  cellStyle: { lineHeight: "1.4", padding: "6px 8px" , overflow:'auto'},
+  cellRenderer: ({ value }) => (
+    <div className="flex flex-wrap gap-2 ">
+      {value
+        ?.flatMap(tagGroup => tagGroup.split(","))
+        .map((tag, index) => (
+          <span
+            key={index}
+            className="text-xs px-3 py-1 rounded-full border font-medium"
+            style={{
+              backgroundColor: index % 2 === 0 ? "#accdfa" : "#e9eafb",
+              color: "#5742e3",
+              borderColor: "#d9d9d9",
+            }}
+          >
+            {tag.trim()}
+          </span>
+        ))}
+    </div>
+  ),
+}
+,
+];
+
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
@@ -49,7 +87,7 @@ console.log("contacts", error)
           {/* Show loading spinner while loading */}
           {loading ? (
             <div className="flex justify-center items-center h-56">
-              <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
             </div>
           ) : error ? (
             <div className="text-[#5742e3] text-center font-semibold text-base">No Data found</div>
@@ -59,10 +97,10 @@ console.log("contacts", error)
                 rowData={rowData}
                 columnDefs={columnDefs}
                 pagination={true}
-                paginationPageSize={10}
+                paginationPageSize={20}
                 domLayout='autoHeight'
                 animateRows={true}
-                headerClass="bg-gray-800 text-white"
+                headerClass="bg-[#accdfa] text-[#5742e3]"
                 enableSorting={true}
                 enableFilter={true}
                 defaultColDef={{

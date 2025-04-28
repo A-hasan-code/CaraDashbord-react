@@ -10,14 +10,17 @@ import {
   endOfYear,
   isWithinInterval,
 } from "date-fns";
-
+import { useGallery } from "@/Redux/hooks/usegallery";
+import { useDispatch, useSelector } from 'react-redux';
+import { getGallery,setPage,setSortName, setSortDate,setLimit ,setStartDate, setEndDate  } from '@/Redux/slices/Gallery.slice'
 export function DateRangePicker({ onDateRangeChange }) {
   const [selectedRange, setSelectedRange] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-
+ 
+const dispatch = useDispatch();
   const ranges = {
     "This Week": [startOfWeek(new Date()), endOfWeek(new Date())],
     "Next Week": [
@@ -42,6 +45,7 @@ export function DateRangePicker({ onDateRangeChange }) {
     setCurrentYear(newStartDate.getFullYear());
 
     onDateRangeChange({ startDate: newStartDate, endDate: newEndDate });
+
   };
 
   const handleDateSelect = (date) => {
@@ -66,15 +70,17 @@ export function DateRangePicker({ onDateRangeChange }) {
     onDateRangeChange(formattedRange);
   };
 
-  const handleReset = () => {
-    setSelectedRange(null);
-    setStartDate(null);
-    setEndDate(null);
-    setCurrentMonth(new Date());
-    setCurrentYear(new Date().getFullYear());
+ const handleReset = () => {
+  setSelectedRange(null);
+  setStartDate(null);
+  setEndDate(null);
+  setCurrentMonth(new Date());
+  setCurrentYear(new Date().getFullYear());
 
-    onDateRangeChange({ startDate: null, endDate: null });
-  };
+  onDateRangeChange({ startDate: null, endDate: null });
+ 
+};
+
 
   const changeMonth = (direction) => {
     const newMonth = add(currentMonth, { months: direction });
