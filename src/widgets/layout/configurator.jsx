@@ -12,65 +12,60 @@ import { getGallery } from '@/Redux/slices/Gallery.slice';
 
 export function Configurator() {
   const dispatch = useDispatch();
-  const { customFields } = useSelector(state => state.displaycfields);
+  const { customFields, loading, error } = useSelector(state => state.displaycfields);
   const { displaycf } = useSelector(state => state.clientIdsSet);
-  const { page, limit, sortName, sortDate } = useSelector((state) => state.gallery);
-
-  const [allFields, setAllFields] = useState([]);
   const [selectedFields, setSelectedFields] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
 
+  const { gallery, page, limit, totalContacts, sortName, sortDate } = useSelector((state) => state.gallery);
+
   useEffect(() => {
     dispatch(fetchCustomFields());
   }, [dispatch]);
 
   useEffect(() => {
-    if (customFields && displaycf) {
-      const validFields = customFields
-        .filter(field => field && field.cf_id && field.cf_key && field.cf_name)
-        .filter(({ cf_name }) => !['cover image', 'related images'].includes(cf_name.toLowerCase()));
-
-      const initiallySelected = displaycf.filter(field => field?.visible);
-      const unselected = validFields.filter(
-        f => !initiallySelected.some(sel => sel.cf_id === f.cf_id)
-      );
-
-      setSelectedFields(initiallySelected);
-      setAllFields([...initiallySelected, ...unselected]);
+    if (displaycf) {
+      const initiallySelectedFields = displaycf.filter(field => field?.visible);
+      setSelectedFields(initiallySelectedFields);
     }
-  }, [customFields, displaycf]);
+  }, [displaycf]);
 
   const handleVisibilityToggle = (cf_id, cf_name) => {
-    const isVisible = selectedFields.some(f => f.cf_id === cf_id);
-    if (isVisible) {
-      setSelectedFields(prev => prev.filter(f => f.cf_id !== cf_id));
+    const fieldExists = selectedFields.some(field => field?.cf_id === cf_id);
+    if (fieldExists) {
+      setSelectedFields(prev => prev.filter(field => field?.cf_id !== cf_id));
     } else if (selectedFields.length < 5) {
       setSelectedFields(prev => [...prev, { cf_id, cf_name, visible: true }]);
     } else {
-      toast.warning("Only 5 fields can be selected.");
+      toast.warning('You can only select up to 5 fields.');
     }
   };
 
   const handleSave = () => {
     setIsSaving(true);
-    const dataToSave = selectedFields.map(field => ({
-      cf_id: field.cf_id,
-      cf_name: field.cf_name,
-      visible: true,
+    const fieldsToSave = selectedFields.map(field => ({
+      cf_id: field?.cf_id,
+      cf_name: field?.cf_name,
+      visible: field?.visible,
     }));
 
-    dispatch(updateDisplaySettings({ displaySetting: dataToSave }))
+    dispatch(updateDisplaySettings({ displaySetting: fieldsToSave }))
       .then(() => {
-        dispatch(fetchCustomFields());toast.success("Selections saved!");
-        dispatch(getGallery({ page, limit, sortName, sortDate }));
-   
+        toast.success('Selections saved successfully!');
+        dispatch(fetchCustomFields());
+        dispatch(getGallery({
+          page,
+          limit,
+          sortName,
+          sortDate,
+        }));
         setIsSaving(false);
       })
       .catch(() => {
-        toast.error("Error saving selections.");
+        toast.error('Error saving selections!');
         setIsSaving(false);
       });
   };
@@ -78,124 +73,139 @@ export function Configurator() {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      const res = await sync();
-      toast.success(res.message || "Synced!");
+      const data = await sync();
+      toast.success(data.message || "Sync complete!");
       dispatch(fetchCustomFields());
-    } catch (err) {
-      toast.error(err?.response?.data?.error || "Sync error.");
+    } catch (error) {
+      toast.error(error.response?.data?.error || "An error occurred while syncing.");
     } finally {
       setIsSyncing(false);
     }
   };
 
+  const filteredFields = (customFields || [])
+    .filter(field => field && field.cf_id && field.cf_name && field.cf_key)
+    .filter(({ cf_id, cf_key, cf_name }) =>
+      cf_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cf_key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cf_name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter(({ cf_name }) => {
+      const lowerName = cf_name.toLowerCase();
+      return lowerName !== 'related images' && lowerName !== 'cover image';
+    });
+
+  const prioritizedFields = [
+    ...selectedFields,
+    ...filteredFields.filter(
+      (field) =>
+        field?.cf_id &&
+        !selectedFields.some(
+          (selected) => selected?.cf_id === field.cf_id
+        )
+    ),
+  ];
+
   const handleDragEnd = (result) => {
-    const { source, destination } = result;
-    if (!destination || source.index === destination.index) return;
+    const { destination, source } = result;
+    if (!destination || destination.index === source.index) return;
 
-    const reordered = [...allFields];
-    const [moved] = reordered.splice(source.index, 1);
-    reordered.splice(destination.index, 0, moved);
-    setAllFields(reordered);
+    const reorderedFields = Array.from(selectedFields);
+    const [removed] = reorderedFields.splice(source.index, 1);
+    reorderedFields.splice(destination.index, 0, removed);
 
-    // Maintain updated order for selectedFields too
-    const updatedSelected = reordered.filter(field =>
-      selectedFields.some(f => f.cf_id === field.cf_id)
-    );
-    setSelectedFields(updatedSelected);
+    setSelectedFields(reorderedFields);
   };
-
-  const filteredFields = allFields.filter(field => {
-    const query = searchQuery.toLowerCase();
-    return (
-      field.cf_id.toLowerCase().includes(query) ||
-      field.cf_key.toLowerCase().includes(query) ||
-      field.cf_name.toLowerCase().includes(query)
-    );
-  });
-
-  const isSaveDisabled = isSaving || selectedFields.length < 1 || selectedFields.length > 5;
 
   return (
     <div className="flex">
-      <aside className={`fixed top-0 right-0 z-50 h-screen w-96 bg-white shadow-lg transition-transform duration-300 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`fixed top-0 right-0 z-50 h-screen w-96 bg-white shadow-lg transition-transform duration-300 overflow-y-auto ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="mb-6 sticky top-0 z-50 bg-white px-4 py-1">
           <h2 className="text-xl font-bold mb-4">Custom Fields Panel</h2>
 
-          <TextField
-            label="Search Fields"
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            sx={{ marginBottom: '1rem', width: '100%' }}
-          />
-
-          <Button
-            variant="contained"
-            onClick={handleSync}
-            disabled={isSyncing}
-            sx={{
-              marginBottom: '1rem',
-              width: '100%',
-              backgroundColor: '#e9eafb',
-              color: '#000',
-              '&:hover': {
+          <div>
+            <TextField
+              label="Search Fields"
+              variant="outlined"
+              size="small"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              sx={{ marginBottom: '1rem', width: '100%' }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleSync}
+              disabled={isSyncing}
+              sx={{
+                marginBottom: '1rem',
+                width: '100%',
                 backgroundColor: '#e9eafb',
-                color: '#5742e3',
-              },
-            }}
-          >
-            {isSyncing ? <CircularProgress size={20} /> : <CachedIcon />}
-          </Button>
+                color: '#000',
+                '&:hover': {
+                  backgroundColor: '#e9eafb',
+                  color: '#5742e3',
+                },
+              }}
+            >
+              {isSyncing ? <CircularProgress size={20} /> : <CachedIcon />}
+            </Button>
+          </div>
         </div>
 
-        <div className="space-y-3 max-h-[70vh] overflow-y-auto px-4 pb-4">
-          <li className="text-sm font-semibold text-gray-800 list-none">Sortable Fields</li>
+        <div className="space-y-3 max-h-90 overflow-y-auto">
+          <li className="text-sm font-semibold text-gray-800 no-underline list-none p-2">
+            visible fields
+          </li>
 
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="droppable-fields">
+       <DragDropContext onDragEnd={handleDragEnd}>
+  <Droppable droppableId="droppable-fields">
+    {(provided) => (
+      <ul
+        className="space-y-3"
+        {...provided.droppableProps}
+        ref={provided.innerRef}
+      >
+        {prioritizedFields.map((field, index) => {
+          if (!field || !field.cf_id || !field.cf_name) return null;
+          const { cf_id, cf_name } = field;
+          const isSelected = selectedFields.some(sel => sel?.cf_id === cf_id);
+
+          return (
+            <Draggable key={cf_id} draggableId={cf_id} index={index}>
               {(provided) => (
-                <ul
-                  className="space-y-3"
-                  {...provided.droppableProps}
+                <li
+                  className="flex justify-start items-center p-2 bg-gray-100 rounded-md"
                   ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
                 >
-                  {filteredFields.map((field, index) => {
-                    const isSelected = selectedFields.some(f => f.cf_id === field.cf_id);
-                    return (
-                      <Draggable key={field.cf_id} draggableId={field.cf_id} index={index}>
-                        {(provided, snapshot) => (
-                          <li
-                            className={`flex items-center p-2 rounded-md bg-gray-100 ${snapshot.isDragging ? 'shadow-md bg-blue-100' : ''}`}
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <FaGripVertical className="mr-2 text-gray-500 cursor-move" />
-                            <span>{field.cf_name}</span>
-                            <button
-                              onClick={() => handleVisibilityToggle(field.cf_id, field.cf_name)}
-                              className="ml-auto text-gray-600 hover:text-black"
-                            >
-                              {isSelected ? <FaEye className="w-5 h-5" /> : <FaEyeSlash className="w-5 h-5" />}
-                            </button>
-                          </li>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                </ul>
+                  <FaGripVertical className="mr-2 text-gray-500 cursor-move" />
+                  <span className="text-left">{cf_name}</span>
+                  <button
+                    onClick={() => handleVisibilityToggle(cf_id, cf_name)}
+                    className="text-gray-600 hover:text-black ml-auto"
+                  >
+                    {isSelected ? <FaEye className="w-5 h-5" /> : <FaEyeSlash className="w-5 h-5" />}
+                  </button>
+                </li>
               )}
-            </Droppable>
-          </DragDropContext>
+            </Draggable>
+          );
+        })}
+        {provided.placeholder}
+      </ul>
+    )}
+  </Droppable>
+</DragDropContext>
+
         </div>
 
-        <div className="sticky bottom-0 bg-white p-4 shadow-inner">
+        <div className="mt-auto sticky bottom-0 z-50">
           <Button
             variant="contained"
+            color="primary"
             onClick={handleSave}
-            disabled={isSaveDisabled}
+            disabled={selectedFields.length === 0 || selectedFields.length > 5 || isSaving}
             sx={{
               width: '100%',
               backgroundColor: '#e9eafb',
